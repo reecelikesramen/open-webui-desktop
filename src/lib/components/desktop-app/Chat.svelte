@@ -63,19 +63,30 @@
 	import { getTools } from '$lib/apis/tools';
 	import ChatbarWrapper from './ChatbarWrapper.svelte';
 	import CompanionChatWrapper from './CompanionChatWrapper.svelte';
-	import { listen } from '@tauri-apps/api/event';
+	import Messages from '../chat/Messages.svelte';
+	import { toast } from 'svelte-sonner';
 
 	export let chatIdProp = '';
 
-	let messageInput: MessageInput;
-
+	let loaded = false;
 	const eventTarget = new EventTarget();
 	let controlPane;
 	let controlPaneComponent;
 
 	let stopResponseFlag = false;
 	let autoScroll = true;
+	let processing = '';
 	let messagesContainerElement: HTMLDivElement;
+
+	let navbarElement;
+
+	let showEventConfirmation = false;
+	let eventConfirmationTitle = '';
+	let eventConfirmationMessage = '';
+	let eventConfirmationInput = false;
+	let eventConfirmationInputPlaceholder = '';
+	let eventConfirmationInputValue = '';
+	let eventCallback = null;
 
 	let chatIdUnsubscriber: Unsubscriber | undefined;
 
@@ -90,15 +101,13 @@
 	let companionChatOpen: boolean = false;
 	$: companionChatOpen = !!chatIdProp || createMessagesList(history.currentId).length > 0;
 
-	// Sync settings with Main Window
-	const unlisten = listen('settings_changed', (event) => {
-		console.log('settings changed', event.payload);
-		$settings = event.payload;
-	});
-
 	let chat = null;
+	let tags = [];
 
-	let history = {
+	let history: {
+		messages: Record<string, object>;
+		currentId: string | null;
+	} = {
 		messages: {},
 		currentId: null
 	};
@@ -155,6 +164,32 @@
 				$tools.find((t) => t.id === id)
 			);
 		}
+	};
+
+	const showMessage = async (message) => {
+		const _chatId = JSON.parse(JSON.stringify($chatId));
+		let _messageId = JSON.parse(JSON.stringify(message.id));
+
+		let messageChildrenIds = history.messages[_messageId].childrenIds;
+
+		while (messageChildrenIds.length !== 0) {
+			_messageId = messageChildrenIds.at(-1);
+			messageChildrenIds = history.messages[_messageId].childrenIds;
+		}
+
+		history.currentId = _messageId;
+
+		await tick();
+		await tick();
+		await tick();
+
+		const messageElement = document.getElementById(`message-${message.id}`);
+		if (messageElement) {
+			messageElement.scrollIntoView({ behavior: 'smooth' });
+		}
+
+		await tick();
+		saveChatHandler(_chatId);
 	};
 
 	const chatEventHandler = async (event, cb) => {
@@ -293,10 +328,12 @@
 		console.log('mounted');
 		window.addEventListener('message', onMessageHandler);
 		$socket?.on('chat-events', chatEventHandler);
+		console.log('Models on mount: ', $models);
 
 		if (!$chatId) {
 			chatIdUnsubscriber = chatId.subscribe(async (value) => {
 				if (!value) {
+					await new Promise((resolve) => setTimeout(resolve, 1000));
 					await initNewChat();
 				}
 			});
@@ -369,7 +406,7 @@
 		} catch (e) {
 			// Remove the failed doc from the files array
 			files = files.filter((f) => f.name !== url);
-			console.error(JSON.stringify(e));
+			toast.error(JSON.stringify(e));
 		}
 	};
 
@@ -402,7 +439,7 @@
 		} catch (e) {
 			// Remove the failed doc from the files array
 			files = files.filter((f) => f.name !== url);
-			console.error(e);
+			toast.error(e);
 		}
 	};
 
@@ -411,6 +448,18 @@
 	//////////////////////////
 
 	const initNewChat = async () => {
+		console.log('initNewChat called');
+		const userSettings = await getUserSettings(localStorage.token);
+
+		if (userSettings) {
+			settings.set(userSettings.ui);
+		} else {
+			settings.set(JSON.parse(localStorage.getItem('settings') ?? '{}'));
+		}
+
+		console.log('settings', $settings);
+		console.log('models', $models);
+
 		if (sessionStorage.selectedModels) {
 			selectedModels = JSON.parse(sessionStorage.selectedModels);
 			sessionStorage.removeItem('selectedModels');
@@ -449,6 +498,8 @@
 			}
 		}
 
+		console.log('selectedModels before filter:', selectedModels);
+
 		selectedModels = selectedModels.filter((modelId) => $models.map((m) => m.id).includes(modelId));
 		if (selectedModels.length === 0 || (selectedModels.length === 1 && selectedModels[0] === '')) {
 			if ($models.length > 0) {
@@ -458,19 +509,21 @@
 			}
 		}
 
-		await showControls.set(false);
-		await showCallOverlay.set(false);
-		await showOverview.set(false);
-		await showArtifacts.set(false);
+		console.log('selectedModels after filter:', selectedModels);
+
+		$showControls = false;
+		$showCallOverlay = false;
+		$showOverview = false;
+		$showArtifacts = false;
 
 		if ($page.url.pathname.includes('/c/')) {
-			replaceState('', `/?companionChatOpen=true`);
+			replaceState('', `/`);
 		}
 
 		autoScroll = true;
 
-		await chatId.set('');
-		await chatTitle.set('');
+		$chatId = '';
+		$chatTitle = '';
 
 		history = {
 			messages: {},
@@ -521,27 +574,19 @@
 			$models.map((m) => m.id).includes(modelId) ? modelId : ''
 		);
 
-		const userSettings = await getUserSettings(localStorage.token);
-
-		if (userSettings) {
-			settings.set(userSettings.ui);
-		} else {
-			settings.set(JSON.parse(localStorage.getItem('settings') ?? '{}'));
-		}
-
 		const chatInput = document.getElementById('chat-input');
 		setTimeout(() => chatInput?.focus(), 0);
 	};
 
 	const loadChat = async () => {
 		chatId.set(chatIdProp);
-		chat = await getChatById(localStorage.token, $chatId).catch(async () => {
+		chat = await getChatById(localStorage.token, $chatId).catch(async (error) => {
 			await goto('/');
 			return null;
 		});
 
 		if (chat) {
-			tags = await getTagsById(localStorage.token, $chatId).catch(async () => {
+			tags = await getTagsById(localStorage.token, $chatId).catch(async (error) => {
 				return [];
 			});
 
@@ -594,21 +639,23 @@
 		}
 	};
 
-	const createMessagesList = (responseMessageId) => {
+	const createMessagesList = (responseMessageId: string | null) => {
+		console.log(typeof responseMessageId, responseMessageId);
 		if (responseMessageId === null) {
 			return [];
 		}
 
 		let message = history.messages[responseMessageId];
-		if (!message?.parentId) {
-			return [message];
-		}
 
 		let messages = [];
 		while (message?.parentId) {
+			console.log(message);
 			messages.unshift(message);
 			message = history.messages[message.parentId];
 		}
+		messages.unshift(message);
+
+		console.log(messages, messages.length);
 
 		return messages;
 	};
@@ -632,7 +679,7 @@
 			session_id: $socket?.id,
 			id: responseMessageId
 		}).catch((error) => {
-			console.error(error);
+			toast.error(error);
 			messages.at(-1).error = { content: error };
 
 			return null;
@@ -669,6 +716,58 @@
 		}
 	};
 
+	const chatActionHandler = async (chatId, actionId, modelId, responseMessageId, event = null) => {
+		const messages = createMessagesList(responseMessageId);
+
+		const res = await chatAction(localStorage.token, actionId, {
+			model: modelId,
+			messages: messages.map((m) => ({
+				id: m.id,
+				role: m.role,
+				content: m.content,
+				info: m.info ? m.info : undefined,
+				timestamp: m.timestamp,
+				...(m.sources ? { sources: m.sources } : {})
+			})),
+			...(event ? { event: event } : {}),
+			chat_id: chatId,
+			session_id: $socket?.id,
+			id: responseMessageId
+		}).catch((error) => {
+			toast.error(error);
+			messages.at(-1).error = { content: error };
+			return null;
+		});
+
+		if (res !== null) {
+			// Update chat history with the new messages
+			for (const message of res.messages) {
+				history.messages[message.id] = {
+					...history.messages[message.id],
+					...(history.messages[message.id].content !== message.content
+						? { originalContent: history.messages[message.id].content }
+						: {}),
+					...message
+				};
+			}
+		}
+
+		if ($chatId == chatId) {
+			if (!$temporaryChatEnabled) {
+				chat = await updateChatById(localStorage.token, chatId, {
+					models: selectedModels,
+					messages: messages,
+					history: history,
+					params: params,
+					files: chatFiles
+				});
+
+				currentChatPage.set(1);
+				await chats.set(await getChatList(localStorage.token, $currentChatPage));
+			}
+		}
+	};
+
 	const getChatEventEmitter = async (modelId: string, chatId: string = '') => {
 		return setInterval(() => {
 			$socket?.emit('usage', {
@@ -682,7 +781,7 @@
 	const createMessagePair = async (userPrompt) => {
 		prompt = '';
 		if (selectedModels.length === 0) {
-			console.error($i18n.t('Model not selected'));
+			toast.error($i18n.t('Model not selected'));
 		} else {
 			const modelId = selectedModels[0];
 			const model = $models.filter((m) => m.id === modelId).at(0);
@@ -744,6 +843,8 @@
 	//////////////////////////
 
 	const submitPrompt = async (userPrompt, { _raw = false } = {}) => {
+		console.log($settings);
+		console.log($config);
 		console.log('submitPrompt', userPrompt, $chatId);
 
 		const messages = createMessagesList(history.currentId);
@@ -755,11 +856,11 @@
 		}
 
 		if (userPrompt === '') {
-			console.error($i18n.t('Please enter a prompt'));
+			toast.error($i18n.t('Please enter a prompt'));
 			return;
 		}
 		if (selectedModels.includes('')) {
-			console.error($i18n.t('Model not selected'));
+			toast.error($i18n.t('Model not selected'));
 			return;
 		}
 
@@ -769,14 +870,14 @@
 		}
 		if (messages.length != 0 && messages.at(-1).error) {
 			// Error in response
-			console.error($i18n.t(`Oops! There was an error in the previous response.`));
+			toast.error($i18n.t(`Oops! There was an error in the previous response.`));
 			return;
 		}
 		if (
 			files.length > 0 &&
 			files.filter((file) => file.type !== 'image' && file.status === 'uploading').length > 0
 		) {
-			console.error(
+			toast.error(
 				$i18n.t(`Oops! There are files still uploading. Please wait for the upload to complete.`)
 			);
 			return;
@@ -785,7 +886,7 @@
 			($config?.file?.max_count ?? null) !== null &&
 			files.length + chatFiles.length > $config?.file?.max_count
 		) {
-			console.error(
+			toast.error(
 				$i18n.t(`You can only chat with a maximum of {{maxCount}} file(s) at a time.`, {
 					maxCount: $config?.file?.max_count
 				})
@@ -923,7 +1024,7 @@
 					);
 
 					if (hasImages && !(model.info?.meta?.capabilities?.vision ?? true)) {
-						console.error(
+						toast.error(
 							$i18n.t('Model {{modelName}} is not vision capable', {
 								modelName: model.name ?? model.id
 							})
@@ -938,7 +1039,7 @@
 					if ($settings?.memory ?? false) {
 						if (userContext === null) {
 							const res = await queryMemory(localStorage.token, prompt).catch((error) => {
-								console.error(error);
+								toast.error(error);
 								return null;
 							});
 							if (res) {
@@ -975,7 +1076,7 @@
 
 					if (chatEventEmitter) clearInterval(chatEventEmitter);
 				} else {
-					console.error($i18n.t(`Model {{modelId}} not found`, { modelId }));
+					toast.error($i18n.t(`Model {{modelId}} not found`, { modelId }));
 				}
 			})
 		);
@@ -1263,6 +1364,10 @@
 									history.messages[responseMessageId] = responseMessage;
 
 									if ($settings.notificationEnabled && !document.hasFocus()) {
+										const notification = new Notification(`${model.id}`, {
+											body: responseMessage.content,
+											icon: `${WEBUI_BASE_URL}/static/favicon.png`
+										});
 									}
 
 									if ($settings?.responseAutoCopy ?? false) {
@@ -1279,7 +1384,7 @@
 					} catch (error) {
 						console.log(error);
 						if ('detail' in error) {
-							console.error(error.detail);
+							toast.error(error.detail);
 						}
 						break;
 					}
@@ -1294,14 +1399,14 @@
 				const error = await res.json();
 				console.log(error);
 				if ('detail' in error) {
-					console.error(error.detail);
+					toast.error(error.detail);
 					responseMessage.error = { content: error.detail };
 				} else {
-					console.error(error.error);
+					toast.error(error.error);
 					responseMessage.error = { content: error.error };
 				}
 			} else {
-				console.error(
+				toast.error(
 					$i18n.t(`Uh-oh! There was an issue connecting to {{provider}}.`, { provider: 'Ollama' })
 				);
 				responseMessage.error = {
@@ -1475,7 +1580,7 @@
 						...createMessagesList(responseMessageId)
 					]
 						.filter((message) => message?.content?.trim())
-						.map((message) => ({
+						.map((message, idx, arr) => ({
 							role: message.role,
 							...((message.files?.filter((file) => file.type === 'image').length > 0 ?? false) &&
 							message.role === 'user'
@@ -1615,6 +1720,10 @@
 				}
 
 				if ($settings.notificationEnabled && !document.hasFocus()) {
+					const notification = new Notification(`${model.id}`, {
+						body: responseMessage.content,
+						icon: `${WEBUI_BASE_URL}/static/favicon.png`
+					});
 				}
 
 				if ($settings.responseAutoCopy) {
@@ -1699,18 +1808,18 @@
 		}
 		console.error(innerError);
 		if ('detail' in innerError) {
-			console.error(innerError.detail);
+			toast.error(innerError.detail);
 			errorMessage = innerError.detail;
 		} else if ('error' in innerError) {
 			if ('message' in innerError.error) {
-				console.error(innerError.error.message);
+				toast.error(innerError.error.message);
 				errorMessage = innerError.error.message;
 			} else {
-				console.error(innerError.error);
+				toast.error(innerError.error);
 				errorMessage = innerError.error;
 			}
 		} else if ('message' in innerError) {
-			console.error(innerError.message);
+			toast.error(innerError.message);
 			errorMessage = innerError.message;
 		}
 
@@ -1736,6 +1845,133 @@
 	const stopResponse = () => {
 		stopResponseFlag = true;
 		console.log('stopResponse');
+	};
+
+	const submitMessage = async (parentId, prompt) => {
+		let userPrompt = prompt;
+		let userMessageId = uuidv4();
+
+		let userMessage = {
+			id: userMessageId,
+			parentId: parentId,
+			childrenIds: [],
+			role: 'user',
+			content: userPrompt,
+			models: selectedModels
+		};
+
+		if (parentId !== null) {
+			history.messages[parentId].childrenIds = [
+				...history.messages[parentId].childrenIds,
+				userMessageId
+			];
+		}
+
+		history.messages[userMessageId] = userMessage;
+		history.currentId = userMessageId;
+
+		await tick();
+		await sendPrompt(userPrompt, userMessageId);
+	};
+
+	const regenerateResponse = async (message) => {
+		console.log('regenerateResponse');
+
+		if (history.currentId) {
+			let userMessage = history.messages[message.parentId];
+			let userPrompt = userMessage.content;
+
+			if ((userMessage?.models ?? [...selectedModels]).length == 1) {
+				// If user message has only one model selected, sendPrompt automatically selects it for regeneration
+				await sendPrompt(userPrompt, userMessage.id);
+			} else {
+				// If there are multiple models selected, use the model of the response message for regeneration
+				// e.g. many model chat
+				await sendPrompt(userPrompt, userMessage.id, {
+					modelId: message.model,
+					modelIdx: message.modelIdx
+				});
+			}
+		}
+	};
+
+	const continueResponse = async () => {
+		console.log('continueResponse');
+		const _chatId = JSON.parse(JSON.stringify($chatId));
+
+		if (history.currentId && history.messages[history.currentId].done == true) {
+			const responseMessage = history.messages[history.currentId];
+			responseMessage.done = false;
+			await tick();
+
+			const model = $models
+				.filter((m) => m.id === (responseMessage?.selectedModelId ?? responseMessage.model))
+				.at(0);
+
+			if (model) {
+				if (model?.owned_by === 'openai') {
+					await sendPromptOpenAI(
+						model,
+						history.messages[responseMessage.parentId].content,
+						responseMessage.id,
+						_chatId
+					);
+				} else
+					await sendPromptOllama(
+						model,
+						history.messages[responseMessage.parentId].content,
+						responseMessage.id,
+						_chatId
+					);
+			}
+		}
+	};
+
+	const mergeResponses = async (messageId, responses, _chatId) => {
+		console.log('mergeResponses', messageId, responses);
+		const message = history.messages[messageId];
+		const mergedResponse = {
+			status: true,
+			content: ''
+		};
+		message.merged = mergedResponse;
+		history.messages[messageId] = message;
+
+		try {
+			const [res, controller] = await generateMoACompletion(
+				localStorage.token,
+				message.model,
+				history.messages[message.parentId].content,
+				responses
+			);
+
+			if (res && res.ok && res.body) {
+				const textStream = await createOpenAITextStream(res.body, $settings.splitLargeChunks);
+				for await (const update of textStream) {
+					const { value, done, sources, error, usage } = update;
+					if (error || done) {
+						break;
+					}
+
+					if (mergedResponse.content == '' && value == '\n') {
+						continue;
+					} else {
+						mergedResponse.content += value;
+						history.messages[messageId] = message;
+					}
+
+					if (autoScroll) {
+						scrollToBottom();
+					}
+				}
+
+				await saveChatHandler(_chatId);
+			} else {
+				console.error(res);
+			}
+		} catch (e) {
+			console.error(e);
+		}
 	};
 
 	const generateChatTitle = async (messages) => {
@@ -1780,6 +2016,7 @@
 				}
 			}
 
+			const lastMessage = messages.at(-1);
 			const modelId = selectedModels[0];
 
 			let generatedTags = await generateTags(localStorage.token, modelId, messages, $chatId).catch(
@@ -1855,7 +2092,7 @@
 
 		const results = await processWebSearch(localStorage.token, searchQuery).catch((error) => {
 			console.log(error);
-			console.error(error);
+			toast.error(error);
 
 			return null;
 		});
@@ -1934,12 +2171,39 @@
 
 <svelte:component this={companionChatOpen ? CompanionChatWrapper : ChatbarWrapper}>
 	{#if companionChatOpen}
-		<div class="w-[100px] h-[100px] bg-white" />
+		<div
+			class=" pb-2.5 flex flex-col justify-between w-full flex-auto overflow-auto h-0 max-w-full z-10 scrollbar-hidden"
+			data-tauri-drag-region
+			id="messages-container"
+			bind:this={messagesContainerElement}
+			on:scroll={(e) => {
+				autoScroll =
+					messagesContainerElement.scrollHeight - messagesContainerElement.scrollTop <=
+					messagesContainerElement.clientHeight + 5;
+			}}
+		>
+			<div class=" h-full w-full flex flex-col" data-tauri-drag-region>
+				<Messages
+					chatId={$chatId}
+					bind:history
+					bind:autoScroll
+					bind:prompt
+					{selectedModels}
+					{sendPrompt}
+					{showMessage}
+					{submitMessage}
+					{continueResponse}
+					{regenerateResponse}
+					{mergeResponses}
+					{chatActionHandler}
+					bottomPadding={files.length > 0}
+				/>
+			</div>
+		</div>
 	{/if}
 	<MessageInput
 		{history}
 		{selectedModels}
-		bind:this={messageInput}
 		bind:files
 		bind:prompt
 		bind:autoScroll

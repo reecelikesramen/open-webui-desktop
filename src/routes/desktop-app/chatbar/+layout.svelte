@@ -15,19 +15,54 @@
 		mobile,
 		socket,
 		activeUserCount,
-		USAGE_POOL
+		USAGE_POOL,
+		settings,
+		models,
+		temporaryChatEnabled,
+		tools,
+		banners
 	} from '$lib/stores';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 
-	import { getBackendConfig } from '$lib/apis';
+	import { getBackendConfig, getModels } from '$lib/apis';
 	import { getSessionUser } from '$lib/apis/auths';
 
 	import { WEBUI_BASE_URL, WEBUI_HOSTNAME } from '$lib/constants';
 	import i18n, { initI18n, getLanguages } from '$lib/i18n';
 	import { bestMatchingLanguage } from '$lib/utils';
+	import { listen } from '@tauri-apps/api/event';
+	import { Toaster } from 'svelte-sonner';
+	import { getBanners } from '$lib/apis/configs';
+	import { getTools } from '$lib/apis/tools';
 
 	setContext('i18n', i18n);
+
+	// Sync lib stores with Main Window
+	const unlisten = listen('stores_changed', (event) => {
+		console.log('stores changed:', event.payload);
+		$settings = event.payload;
+		switch (event.payload.store_name) {
+			case 'models':
+				$models = event.payload.store;
+				break;
+			case 'settings':
+				$settings = event.payload.store;
+				break;
+			case 'config':
+				$config = event.payload.store;
+				break;
+			case 'user':
+				$user = event.payload.store;
+				break;
+			case 'temporaryChatEnabled':
+				$temporaryChatEnabled = event.payload.store;
+				break;
+			case 'tools':
+				$tools = event.payload.store;
+				break;
+		}
+	});
 
 	let loaded = false;
 	const BREAKPOINT = 768;
@@ -79,9 +114,6 @@
 	};
 
 	onMount(async () => {
-		theme.set(localStorage.theme);
-
-		mobile.set(window.innerWidth < BREAKPOINT);
 		const onResize = () => {
 			if (window.innerWidth < BREAKPOINT) {
 				mobile.set(true);
@@ -89,6 +121,10 @@
 				mobile.set(false);
 			}
 		};
+
+		theme.set(localStorage.theme);
+
+		mobile.set(window.innerWidth < BREAKPOINT);
 
 		window.addEventListener('resize', onResize);
 
@@ -107,7 +143,8 @@
 			const languages = await getLanguages();
 			const browserLanguages = navigator.languages
 				? navigator.languages
-				: [navigator.language || navigator.userLanguage];
+				: // @ts-expect-error Compatibility with older Internet Explorer browsers
+					[navigator.language || navigator.userLanguage];
 			const lang = backendConfig.default_locale
 				? backendConfig.default_locale
 				: bestMatchingLanguage(languages, browserLanguages, 'en-US');
@@ -123,6 +160,8 @@
 				setupSocket();
 
 				if (localStorage.token) {
+					console.log('Token:', localStorage.token);
+
 					// Get Session User Info
 					const sessionUser = await getSessionUser(localStorage.token).catch((error) => {
 						console.error(error);
@@ -150,6 +189,12 @@
 			// Redirect to /error when Backend Not Detected
 			await goto(`/error`);
 		}
+
+		$models = await getModels(localStorage.token);
+		$banners = await getBanners(localStorage.token);
+		$tools = await getTools(localStorage.token);
+
+		console.log('Models on layout', $models);
 
 		await tick();
 
@@ -183,8 +228,9 @@
 			loaded = true;
 		}
 
-		return () => {
+		return async () => {
 			window.removeEventListener('resize', onResize);
+			(await unlisten)();
 		};
 	});
 </script>
@@ -193,6 +239,17 @@
 	<title>{$WEBUI_NAME}</title>
 </svelte:head>
 <slot />
+<Toaster
+	theme={$theme.includes('dark')
+		? 'dark'
+		: $theme === 'system'
+			? window.matchMedia('(prefers-color-scheme: dark)').matches
+				? 'dark'
+				: 'light'
+			: 'light'}
+	richColors
+	position="top-center"
+/>
 
 <style lang="postcss">
 	:global(body) {

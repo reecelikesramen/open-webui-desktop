@@ -109,6 +109,8 @@ export const IS_TAURI_DESKTOP = IS_TAURI && IS_DESKTOP; // running on desktop as
 export const IS_WEB_MOBILE = isWeb && IS_MOBILE; // running on mobile in the browser - but not as a tauri app
 export const IS_WEB_DESKTOP = isWeb && IS_DESKTOP; // running on desktop in the browser - but not as a tauri app
 
+export const TAURI_DRAGGABLE = IS_TAURI_DESKTOP ? { 'data-tauri-drag-region': true } : {};
+
 // Source: https://kit.svelte.dev/docs/modules#$env-static-public
 // This feature, akin to $env/static/private, exclusively incorporates environment variables
 // that are prefixed with config.kit.env.publicPrefix (usually set to PUBLIC_).

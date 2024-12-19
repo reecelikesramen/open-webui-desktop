@@ -55,20 +55,20 @@ pub fn run() {
                 })?;
 
             // Set up focus change listener
-            if let Some(window) = app.get_webview_window("chatbar") {
-                let chatbar_window = window.clone();
-                let handle = app_handle.clone();
-                window.on_window_event(move |event| {
-                    if let tauri::WindowEvent::Focused(focused) = event {
-                        if !focused {
-                            chatbar_window.hide().expect("Failed to hide chatbar");
-                            let state = handle.state::<Mutex<AppState>>();
-                            let mut state = state.lock().unwrap();
-                            state.visible = false;
-                        }
-                    }
-                });
-            }
+            // if let Some(window) = app.get_webview_window("chatbar") {
+            //     let chatbar_window = window.clone();
+            //     let handle = app_handle.clone();
+            //     window.on_window_event(move |event| {
+            //         if let tauri::WindowEvent::Focused(focused) = event {
+            //             if !focused {
+            //                 chatbar_window.hide().expect("Failed to hide chatbar");
+            //                 let state = handle.state::<Mutex<AppState>>();
+            //                 let mut state = state.lock().unwrap();
+            //                 state.visible = false;
+            //             }
+            //         }
+            //     });
+            // }
 
             Ok(())
         })
@@ -92,7 +92,7 @@ pub(crate) fn move_chatbar(
             let window_size = window.outer_size().expect("Failed to get window size");
             let x = monitor.position().x + ((monitor_size.width - window_size.width) / 2) as i32;
             let mut y =
-                monitor.position().y + (monitor_size.height - window_size.height - 132) as i32;
+                monitor.position().y + (monitor_size.height - window_size.height - 57) as i32;
 
             // TODO: padding distance
             if companion_chat_open {

@@ -16,7 +16,16 @@
 		socket,
 		activeUserCount,
 		settings,
-		USAGE_POOL
+		USAGE_POOL,
+
+		models,
+
+		temporaryChatEnabled,
+
+		tools
+
+
+
 	} from '$lib/stores';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -36,8 +45,13 @@
 	let loaded = false;
 	const BREAKPOINT = 768;
 
-	// Provide settings updates to
-	$: emit('settings_changed', $settings);
+	// Provide store update to chatbar
+	$: emit('stores_changed', { store_name: 'models', store: $models });
+	$: emit('stores_changed', { store_name: 'settings', store: $settings });
+	$: emit('stores_changed', { store_name: 'config', store: $config });
+	$: emit('stores_changed', { store_name: 'user', store: $user });
+	$: emit('stores_changed', { store_name: 'temporaryChatEnabled', store: $temporaryChatEnabled });
+	$: emit('stores_changed', { store_name: 'tools', store: $tools });
 
 	const setupSocket = () => {
 		const _socket = io(`${WEBUI_BASE_URL}` || undefined, {

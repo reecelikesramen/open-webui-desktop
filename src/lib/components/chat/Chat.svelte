@@ -638,34 +638,23 @@
 		}
 	};
 
-	// const createMessagesList = (responseMessageId) => {
-	// 	if (responseMessageId === null) {
-	// 		return [];
-	// 	}
-
-	// 	const message = history.messages[responseMessageId];
-	// 	if (message?.parentId) {
-	// 		return [...createMessagesList(message.parentId), message];
-	// 	} else {
-	// 		return [message];
-	// 	}
-	// };
-
-	const createMessagesList = (responseMessageId) => {
+	const createMessagesList = (responseMessageId: string | null) => {
+		console.log(typeof responseMessageId, responseMessageId);
 		if (responseMessageId === null) {
 			return [];
 		}
 
 		let message = history.messages[responseMessageId];
-		if (!message?.parentId) {
-			return [message];
-		}
 
 		let messages = [];
 		while (message?.parentId) {
+			console.log(message);
 			messages.unshift(message);
 			message = history.messages[message.parentId];
 		}
+		messages.unshift(message);
+
+		console.log(messages, messages.length);
 
 		return messages;
 	};

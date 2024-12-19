@@ -23,7 +23,12 @@
 	import { uploadFile } from '$lib/apis/files';
 	import { getTools } from '$lib/apis/tools';
 
-	import { WEBUI_BASE_URL, WEBUI_API_BASE_URL, PASTED_TEXT_CHARACTER_LIMIT } from '$lib/constants';
+	import {
+		WEBUI_BASE_URL,
+		WEBUI_API_BASE_URL,
+		PASTED_TEXT_CHARACTER_LIMIT,
+		TAURI_DRAGGABLE
+	} from '$lib/constants';
 
 	import Tooltip from '../common/Tooltip.svelte';
 	import InputMenu from './MessageInput/InputMenu.svelte';
@@ -270,7 +275,7 @@
 <FilesOverlay show={dragged} />
 
 {#if loaded}
-	<div class="w-full font-primary" data-tauri-drag-region>
+	<div class="w-full font-primary" {...TAURI_DRAGGABLE}>
 		<div class=" mx-auto inset-x-0 bg-transparent flex justify-center">
 			<div class="flex flex-col px-3 max-w-6xl w-full">
 				<div class="relative">
@@ -546,7 +551,7 @@
 									</div>
 								{/if}
 
-								<div class="flex" data-tauri-drag-region>
+								<div class="flex" {...TAURI_DRAGGABLE}>
 									<div class="ml-1 self-end mb-1.5 flex space-x-1">
 										<InputMenu
 											bind:webSearchEnabled
@@ -583,7 +588,7 @@
 									{#if $settings?.richTextInput ?? true}
 										<div
 											class="scrollbar-hidden text-left bg-transparent dark:text-gray-100 outline-none w-full py-2.5 px-1 rounded-xl resize-none h-fit max-h-80 overflow-auto"
-											data-tauri-drag-region
+											{...TAURI_DRAGGABLE}
 										>
 											<RichTextInput
 												bind:this={chatInputElement}

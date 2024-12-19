@@ -331,7 +331,7 @@
 	};
 </script>
 
-<div class="h-full flex pt-8">
+<div class="h-full flex pt-8" data-tauri-drag-region>
 	{#if Object.keys(history?.messages ?? {}).length == 0}
 		<ChatPlaceholder
 			modelIds={selectedModels}
@@ -365,9 +365,9 @@
 			}}
 		/>
 	{:else}
-		<div class="w-full pt-2">
+		<div class="w-full pt-2" data-tauri-drag-region>
 			{#key chatId}
-				<div class="w-full">
+				<div class="w-full" data-tauri-drag-region>
 					{#if messages.at(0)?.parentId !== null}
 						<Loader
 							on:visible={(e) => {
@@ -377,7 +377,10 @@
 								}
 							}}
 						>
-							<div class="w-full flex justify-center py-1 text-xs animate-pulse items-center gap-2">
+							<div
+								class="w-full flex justify-center py-1 text-xs animate-pulse items-center gap-2"
+								data-tauri-drag-region
+							>
 								<Spinner className=" size-4" />
 								<div class=" ">Loading...</div>
 							</div>
@@ -408,9 +411,9 @@
 						/>
 					{/each}
 				</div>
-				<div class="pb-12" />
+				<div class="pb-12" data-tauri-drag-region />
 				{#if bottomPadding}
-					<div class="  pb-6" />
+					<div class="pb-6" data-tauri-drag-region />
 				{/if}
 			{/key}
 		</div>

@@ -43,6 +43,7 @@
 	class="flex flex-col justify-between px-5 mb-3 w-full {($settings?.widescreenMode ?? null)
 		? 'max-w-full'
 		: 'max-w-5xl'} mx-auto rounded-lg group"
+	data-tauri-drag-region
 >
 	{#if history.messages[messageId]}
 		{#if history.messages[messageId].role === 'user'}
