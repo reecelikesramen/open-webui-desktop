@@ -3,10 +3,5 @@
 	"identifier": "default",
 	"description": "Capability for the main window",
 	"windows": ["main"],
-	"permissions": [
-		"core:default",
-		"opener:default",
-		"core:window:allow-show",
-		"core:window:allow-hide"
-	]
+	"permissions": ["core:default", "opener:default"]
 }

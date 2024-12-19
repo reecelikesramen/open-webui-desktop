@@ -181,6 +181,8 @@
 			$appState = DEFAULT_STATE;
 			$appConfig = (await store.get('config')) || DEFAULT_CONFIG;
 
+			console.log('Initial app state:', $appState, $appConfig);
+
 			theme.set(localStorage.theme);
 
 			mobile.set(window.innerWidth < BREAKPOINT);
@@ -253,8 +255,6 @@
 			$banners = await getBanners(localStorage.token);
 			$tools = await getTools(localStorage.token);
 
-			console.log('Models on layout', $models);
-
 			await tick();
 
 			if (
@@ -297,6 +297,6 @@
 	});
 </script>
 
-{#if !loaded}
+{#if loaded}
 	<slot />
 {/if}

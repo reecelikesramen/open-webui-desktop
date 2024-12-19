@@ -23,12 +23,7 @@
 	import { uploadFile } from '$lib/apis/files';
 	import { getTools } from '$lib/apis/tools';
 
-	import {
-		WEBUI_BASE_URL,
-		WEBUI_API_BASE_URL,
-		PASTED_TEXT_CHARACTER_LIMIT,
-		TAURI_DRAGGABLE
-	} from '$lib/constants';
+	import { WEBUI_BASE_URL, WEBUI_API_BASE_URL, PASTED_TEXT_CHARACTER_LIMIT } from '$lib/constants';
 
 	import Tooltip from '../common/Tooltip.svelte';
 	import InputMenu from './MessageInput/InputMenu.svelte';
@@ -247,8 +242,6 @@
 			chatInput?.focus();
 		}, 0);
 
-		window.addEventListener('keydown', handleKeyDown);
-
 		await tick();
 
 		const dropzoneElement = document.getElementById('chat-container');
@@ -260,7 +253,6 @@
 
 	onDestroy(() => {
 		console.log('destroy');
-		window.removeEventListener('keydown', handleKeyDown);
 
 		const dropzoneElement = document.getElementById('chat-container');
 
@@ -272,10 +264,10 @@
 	});
 </script>
 
+<svelte:window on:keydown={handleKeyDown} />
 <FilesOverlay show={dragged} />
-
 {#if loaded}
-	<div class="w-full font-primary" {...TAURI_DRAGGABLE}>
+	<div class="w-full font-primary" data-tauri-drag-region>
 		<div class=" mx-auto inset-x-0 bg-transparent flex justify-center">
 			<div class="flex flex-col px-3 max-w-6xl w-full">
 				<div class="relative">
@@ -551,7 +543,7 @@
 									</div>
 								{/if}
 
-								<div class="flex" {...TAURI_DRAGGABLE}>
+								<div class="flex" data-tauri-drag-region>
 									<div class="ml-1 self-end mb-1.5 flex space-x-1">
 										<InputMenu
 											bind:webSearchEnabled
@@ -588,7 +580,7 @@
 									{#if $settings?.richTextInput ?? true}
 										<div
 											class="scrollbar-hidden text-left bg-transparent dark:text-gray-100 outline-none w-full py-2.5 px-1 rounded-xl resize-none h-fit max-h-80 overflow-auto"
-											{...TAURI_DRAGGABLE}
+											data-tauri-drag-region
 										>
 											<RichTextInput
 												bind:this={chatInputElement}
@@ -627,6 +619,14 @@
 												}}
 												on:keydown={async (e) => {
 													e = e.detail.event;
+
+													if (e.key === 'Escape') {
+														console.log('Escape');
+														atSelectedModel = undefined;
+														selectedToolIds = [];
+														webSearchEnabled = false;
+														return;
+													}
 
 													const isCtrlPressed = e.ctrlKey || e.metaKey; // metaKey is for Cmd key on Mac
 													const commandsContainerElement =
@@ -732,13 +732,6 @@
 															}
 														}
 													}
-
-													if (e.key === 'Escape') {
-														console.log('Escape');
-														atSelectedModel = undefined;
-														selectedToolIds = [];
-														webSearchEnabled = false;
-													}
 												}}
 												on:paste={async (e) => {
 													e = e.detail.event;
@@ -811,6 +804,14 @@
 												}
 											}}
 											on:keydown={async (e) => {
+												if (e.key === 'Escape') {
+													console.log('Escape');
+													atSelectedModel = undefined;
+													selectedToolIds = [];
+													webSearchEnabled = false;
+													return;
+												}
+
 												const isCtrlPressed = e.ctrlKey || e.metaKey; // metaKey is for Cmd key on Mac
 												const commandsContainerElement =
 													document.getElementById('commands-container');
@@ -914,13 +915,6 @@
 
 													e.target.style.height = '';
 													e.target.style.height = Math.min(e.target.scrollHeight, 320) + 'px';
-												}
-
-												if (e.key === 'Escape') {
-													console.log('Escape');
-													atSelectedModel = undefined;
-													selectedToolIds = [];
-													webSearchEnabled = false;
 												}
 											}}
 											rows="1"

@@ -9,8 +9,14 @@ import {
 } from '../constants';
 import moveChatBar from '../actions/move_chatbar';
 import { resetChatTimePreferenceToSeconds, type AppConfig, type AppState } from '../state';
+import type { ShortcutEvent } from '@tauri-apps/plugin-global-shortcut';
 
-export default async function onShortcut() {
+export default async function onShortcut(event: ShortcutEvent) {
+	console.log('onShortcut');
+	if (event.state !== 'Pressed') {
+		return;
+	}
+
 	// get state
 	const store = await load('app.json', { autoSave: true });
 	let state: AppState = (await store.get('state')) || DEFAULT_STATE;
@@ -41,6 +47,9 @@ export default async function onShortcut() {
 	} else if (!companionChatOpen) {
 		await moveChatBar(chatBarPosition, companionChatOpen);
 	}
+
+	await window.show();
+	await window.setFocus();
 
 	await store.set('state', state);
 }

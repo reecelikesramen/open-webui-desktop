@@ -64,36 +64,32 @@
 			// Move chat bar
 			await moveChatBar($appConfig.chatBarPositionPreference, false);
 
-			/////////////////////////////////
-			// INITIALIZE KEYBINDS
-			/////////////////////////////////
-
+			// Set global shortcut
 			await setShortcut($appConfig.shortcut);
-
-			document.addEventListener('keydown', async (event: KeyboardEvent) => {
-				if (event.key !== 'Escape') {
-					return;
-				}
-
-				event.preventDefault();
-
-				let window = await Window.getByLabel(CHATBAR_WINDOW_LABEL);
-
-				if (!window) {
-					console.error('Failed to get chatbar window');
-					return;
-				}
-
-				await window.hide();
-			});
 		})();
 
 		return async () => {
 			(await unlisten)();
 		};
 	});
+
+	const closeChatBar = async (event: KeyboardEvent) => {
+		console.log('closeChatBar', event.key);
+		if (event.key !== 'Escape') {
+			return;
+		}
+
+		let window = await Window.getByLabel(CHATBAR_WINDOW_LABEL);
+		if (!window) {
+			console.error('Failed to get chatbar window');
+			return;
+		}
+
+		await window.hide();
+	};
 </script>
 
+<svelte:window on:keypress={closeChatBar} />
 <svelte:head>
 	<title>{$WEBUI_NAME}</title>
 </svelte:head>

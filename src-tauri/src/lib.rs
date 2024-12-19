@@ -20,55 +20,55 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_nspanel::init())
         .setup(|app| {
-            // Initialize app state
-            app.manage(Mutex::new(AppState::default()));
+            // // Initialize app state
+            // app.manage(Mutex::new(AppState::default()));
 
-            // Initialize store and load config
-            let store = app.store("config.json")?;
-            // let config = store
-            //     .get("config")
-            //     .unwrap_or_else(|| json!(AppConfig::default()));
-            // let config: AppConfig = serde_json::from_value(config).unwrap_or_default();
-            let config = AppConfig::default();
+            // // Initialize store and load config
+            // let store = app.store("config.json")?;
+            // // let config = store
+            // //     .get("config")
+            // //     .unwrap_or_else(|| json!(AppConfig::default()));
+            // // let config: AppConfig = serde_json::from_value(config).unwrap_or_default();
+            // let config = AppConfig::default();
 
-            // Navigate to base url
-            if let Some(window) = app.get_webview_window("main") {
-                window.eval(&format!("window.location.href = '{}';", config.base_url))?;
-                window.show()?;
-            }
+            // // Navigate to base url
+            // if let Some(window) = app.get_webview_window("main") {
+            //     window.eval(&format!("window.location.href = '{}';", config.base_url))?;
+            //     window.show()?;
+            // }
 
-            // Use the shared function to set up the initial shortcut
-            let app_handle = app.handle();
-            set_shortcut_internal(app_handle, config.shortcut)?;
+            // // Use the shared function to set up the initial shortcut
+            // let app_handle = app.handle();
+            // set_shortcut_internal(app_handle, config.shortcut)?;
 
-            let handle = app_handle.clone();
-            app.global_shortcut()
-                .on_shortcut("Escape", move |_, _, event| {
-                    if event.state == ShortcutState::Pressed {
-                        if let Some(window) = handle.get_webview_window("chatbar") {
-                            window.hide().expect("Failed to hide chatbar");
-                            let state = handle.state::<Mutex<AppState>>();
-                            let mut state = state.lock().unwrap();
-                            state.visible = false;
-                        }
-                    }
-                })?;
-
-            // Set up focus change listener
-            // if let Some(window) = app.get_webview_window("chatbar") {
-            //     let chatbar_window = window.clone();
-            //     let handle = app_handle.clone();
-            //     window.on_window_event(move |event| {
-            //         if let tauri::WindowEvent::Focused(focused) = event {
-            //             if !focused {
-            //                 chatbar_window.hide().expect("Failed to hide chatbar");
+            // let handle = app_handle.clone();
+            // app.global_shortcut()
+            //     .on_shortcut("Escape", move |_, _, event| {
+            //         if event.state == ShortcutState::Pressed {
+            //             if let Some(window) = handle.get_webview_window("chatbar") {
+            //                 window.hide().expect("Failed to hide chatbar");
             //                 let state = handle.state::<Mutex<AppState>>();
             //                 let mut state = state.lock().unwrap();
             //                 state.visible = false;
             //             }
             //         }
-            //     });
-            // }
+            //     })?;
+
+            // // Set up focus change listener
+            // // if let Some(window) = app.get_webview_window("chatbar") {
+            // //     let chatbar_window = window.clone();
+            // //     let handle = app_handle.clone();
+            // //     window.on_window_event(move |event| {
+            // //         if let tauri::WindowEvent::Focused(focused) = event {
+            // //             if !focused {
+            // //                 chatbar_window.hide().expect("Failed to hide chatbar");
+            // //                 let state = handle.state::<Mutex<AppState>>();
+            // //                 let mut state = state.lock().unwrap();
+            // //                 state.visible = false;
+            // //             }
+            // //         }
+            // //     });
+            // // }
 
             Ok(())
         })

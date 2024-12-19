@@ -1,6 +1,19 @@
 {
 	"identifier": "desktop-capability",
 	"platforms": ["macOS", "windows", "linux"],
-	"windows": ["main"],
-	"permissions": ["global-shortcut:default"]
+	"windows": ["main", "chatbar"],
+	"permissions": [
+		"global-shortcut:default",
+		"core:window:allow-start-dragging",
+		"core:window:allow-set-size",
+		"core:window:allow-set-position",
+		"core:window:allow-show",
+		"core:window:allow-hide",
+		"core:window:allow-set-focus",
+		"store:default",
+		"global-shortcut:allow-register",
+		"global-shortcut:allow-unregister",
+		"global-shortcut:allow-unregister-all",
+		"global-shortcut:allow-is-registered"
+	]
 }

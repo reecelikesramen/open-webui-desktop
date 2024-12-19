@@ -47,11 +47,11 @@ export function resetChatTimePreferenceToSeconds(resetChatTimePreference: ResetC
 		case 'IMMEDIATELY':
 			return 0;
 		case '10_MIN':
-			return 10 * 60 * 1000;
+			return 600_000;
 		case '15_MIN':
-			return 15 * 60 * 1000;
+			return 900_000;
 		case '30_MIN':
-			return 30 * 60 * 1000;
+			return 1_800_000;
 		case 'NEVER':
 			return Infinity;
 	}
