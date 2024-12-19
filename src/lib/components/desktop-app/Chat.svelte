@@ -57,7 +57,7 @@
 	import { createOpenAITextStream } from '$lib/apis/streaming';
 	import { queryMemory } from '$lib/apis/memories';
 	import { getAndUpdateUserLocation, getUserSettings } from '$lib/apis/users';
-	import { chatCompleted, generateTitle, generateQueries, generateTags } from '$lib/apis';
+	import { chatCompleted, generateTitle, generateQueries, generateTags, generateMoACompletion } from '$lib/apis';
 
 	import MessageInput from '$lib/components/chat/MessageInput.svelte';
 	import { getTools } from '$lib/apis/tools';

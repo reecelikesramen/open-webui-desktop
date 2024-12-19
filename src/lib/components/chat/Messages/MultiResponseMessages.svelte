@@ -194,6 +194,7 @@
 							: `border-gray-50 dark:border-gray-850 border-dashed ${
 									$mobile ? 'min-w-full' : 'min-w-80'
 								}`} transition-all p-5 rounded-2xl"
+						data-tauri-drag-region
 						on:click={async () => {
 							if (messageId != _messageId) {
 								let currentMessageId = _messageId;
@@ -253,7 +254,7 @@
 						{#if history.messages[messageId]?.merged?.status}
 							{@const message = history.messages[messageId]?.merged}
 
-							<div class="w-full rounded-xl pl-5 pr-2 py-2">
+							<div class="w-full rounded-xl pl-5 pr-2 py-2" data-tauri-drag-region>
 								<Name>
 									Merged Response
 
@@ -266,7 +267,7 @@
 									{/if}
 								</Name>
 
-								<div class="mt-1 markdown-prose w-full min-w-full">
+								<div class="mt-1 markdown-prose w-full min-w-full" data-tauri-drag-region>
 									{#if (message?.content ?? '') === ''}
 										<Skeleton />
 									{:else}
@@ -278,7 +279,10 @@
 					</div>
 
 					{#if isLastMessage}
-						<div class=" flex-shrink-0 text-gray-600 dark:text-gray-500 mt-1">
+						<div
+							class=" flex-shrink-0 text-gray-600 dark:text-gray-500 mt-1"
+							data-tauri-drag-region
+						>
 							<Tooltip content={$i18n.t('Merge Responses')} placement="bottom">
 								<button
 									type="button"
