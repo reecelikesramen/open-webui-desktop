@@ -638,37 +638,37 @@
 		}
 	};
 
-	const createMessagesList = (responseMessageId) => {
-		if (responseMessageId === null) {
-			return [];
-		}
-
-		const message = history.messages[responseMessageId];
-		if (message?.parentId) {
-			return [...createMessagesList(message.parentId), message];
-		} else {
-			return [message];
-		}
-	};
-
 	// const createMessagesList = (responseMessageId) => {
 	// 	if (responseMessageId === null) {
 	// 		return [];
 	// 	}
 
-	// 	let message = history.messages[responseMessageId];
+	// 	const message = history.messages[responseMessageId];
 	// 	if (message?.parentId) {
-	// 		return [messages];
+	// 		return [...createMessagesList(message.parentId), message];
+	// 	} else {
+	// 		return [message];
 	// 	}
-
-	// 	let messages = [];
-	// 	while (message?.parentId) {
-	// 		messages.unshift(message);
-	// 		message = history.messages[message.parentId];
-	// 	}
-
-	// 	return messages;
 	// };
+
+	const createMessagesList = (responseMessageId) => {
+		if (responseMessageId === null) {
+			return [];
+		}
+
+		let message = history.messages[responseMessageId];
+		if (!message?.parentId) {
+			return [message];
+		}
+
+		let messages = [];
+		while (message?.parentId) {
+			messages.unshift(message);
+			message = history.messages[message.parentId];
+		}
+
+		return messages;
+	};
 
 	const chatCompletedHandler = async (chatId, modelId, responseMessageId, messages) => {
 		await mermaid.run({

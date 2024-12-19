@@ -63,6 +63,7 @@
 	import { getTools } from '$lib/apis/tools';
 	import ChatbarWrapper from './ChatbarWrapper.svelte';
 	import CompanionChatWrapper from './CompanionChatWrapper.svelte';
+	import { listen } from '@tauri-apps/api/event';
 
 	export let chatIdProp = '';
 
@@ -87,7 +88,13 @@
 	let webSearchEnabled = false;
 
 	let companionChatOpen: boolean = false;
-	// $: companionChatOpen = chatIdProp || ;
+	$: companionChatOpen = !!chatIdProp || createMessagesList(history.currentId).length > 0;
+
+	// Sync settings with Main Window
+	const unlisten = listen('settings_changed', (event) => {
+		console.log('settings changed', event.payload);
+		$settings = event.payload;
+	});
 
 	let chat = null;
 
@@ -592,12 +599,18 @@
 			return [];
 		}
 
-		const message = history.messages[responseMessageId];
-		if (message?.parentId) {
-			return [...createMessagesList(message.parentId), message];
-		} else {
+		let message = history.messages[responseMessageId];
+		if (!message?.parentId) {
 			return [message];
 		}
+
+		let messages = [];
+		while (message?.parentId) {
+			messages.unshift(message);
+			message = history.messages[message.parentId];
+		}
+
+		return messages;
 	};
 
 	const chatCompletedHandler = async (chatId, modelId, responseMessageId, messages) => {
@@ -1948,7 +1961,9 @@
 		on:submit={async (e) => {
 			if (e.detail) {
 				await tick();
-				submitPrompt(e.detail.replaceAll('\n\n', '\n'));
+				submitPrompt(
+					($settings?.richTextInput ?? true) ? e.detail.replaceAll('\n\n', '\n') : e.detail
+				);
 			}
 		}}
 	/>

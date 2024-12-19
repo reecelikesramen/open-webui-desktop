@@ -15,6 +15,7 @@
 		mobile,
 		socket,
 		activeUserCount,
+		settings,
 		USAGE_POOL
 	} from '$lib/stores';
 	import { goto } from '$app/navigation';
@@ -28,10 +29,15 @@
 	import i18n, { initI18n, getLanguages } from '$lib/i18n';
 	import { bestMatchingLanguage } from '$lib/utils';
 
+	import { emit } from '@tauri-apps/api/event';
+
 	setContext('i18n', i18n);
 
 	let loaded = false;
 	const BREAKPOINT = 768;
+
+	// Provide settings updates to
+	$: emit('settings_changed', $settings);
 
 	const setupSocket = () => {
 		const _socket = io(`${WEBUI_BASE_URL}` || undefined, {
