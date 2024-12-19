@@ -10,14 +10,14 @@
 		settings,
 		WEBUI_NAME,
 		theme,
-		models,
-		type Model
+		models
 	} from '$lib/stores';
 	import { listen } from '@tauri-apps/api/event';
 	import { Toaster } from 'svelte-sonner';
 	import { APP_STORES_CHANGED, CHATBAR_WINDOW_LABEL } from '../../../app/constants';
 	import { Window } from '@tauri-apps/api/window';
 	import { setShortcut } from '../../../app/commands/set_shortcut';
+	import { register, unregister, type ShortcutEvent } from '@tauri-apps/plugin-global-shortcut';
 
 	interface StoreChangedPayload {
 		store_name:
@@ -66,6 +66,21 @@
 
 			// Set global shortcut
 			await setShortcut($appConfig.shortcut);
+
+			// Set lose focus: hide
+			const chatBarWindow = await Window.getByLabel(CHATBAR_WINDOW_LABEL);
+			if (!chatBarWindow) {
+				throw new Error('Failed to get chatbar window');
+			}
+			await chatBarWindow.onFocusChanged(async ({ payload: focused }) => {
+				if (!focused) {
+					// Hide the window and remove Escape close window shortcut
+					await chatBarWindow.hide();
+					await unregister('Escape');
+				} else {
+					await register('Escape', closeChatBar);
+				}
+			});
 		})();
 
 		return async () => {
@@ -73,23 +88,21 @@
 		};
 	});
 
-	const closeChatBar = async (event: KeyboardEvent) => {
-		console.log('closeChatBar', event.key);
-		if (event.key !== 'Escape') {
+	const closeChatBar = async (event: ShortcutEvent) => {
+		if (event.state !== 'Pressed') {
 			return;
 		}
 
-		let window = await Window.getByLabel(CHATBAR_WINDOW_LABEL);
-		if (!window) {
-			console.error('Failed to get chatbar window');
+		let chatBarWindow = await Window.getByLabel(CHATBAR_WINDOW_LABEL);
+		if (!chatBarWindow) {
+			throw new Error('Failed to get chatbar window');
 			return;
 		}
 
-		await window.hide();
+		await chatBarWindow.hide();
 	};
 </script>
 
-<svelte:window on:keypress={closeChatBar} />
 <svelte:head>
 	<title>{$WEBUI_NAME}</title>
 </svelte:head>

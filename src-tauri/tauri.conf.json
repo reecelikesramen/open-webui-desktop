@@ -31,7 +31,7 @@
 				"url": "/desktop-app/chatbar",
 				"width": 600,
 				"height": 400,
-				"visible": true,
+				"visible": false,
 				"visibleOnAllWorkspaces": true,
 				"transparent": true,
 				"decorations": false,
