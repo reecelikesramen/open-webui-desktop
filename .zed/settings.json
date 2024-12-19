@@ -1,0 +1,10 @@
+{
+	"lsp": {
+		"rust-analyzer": {
+			"server.extraEnv": {
+				"CARGO_TARGET_DIR": "$ZED_WORKTREE_ROOT/src-tauri/target/analyzer"
+			},
+			"cargo.targetDir": "$ZED_WORKTREE_ROOT/src-tauri/target/analyzer"
+		}
+	}
+}

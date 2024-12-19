@@ -1,0 +1,59 @@
+{
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "open-webui-desktop",
+	"version": "0.1.0",
+	"identifier": "com.open-webui-desktop.app",
+	"build": {
+		"beforeDevCommand": "deno task dev",
+		"devUrl": "http://localhost:1420",
+		"beforeBuildCommand": "deno task build",
+		"frontendDist": "../build"
+	},
+	"app": {
+		"macOSPrivateApi": true,
+		"windows": [
+			{
+				"label": "main",
+				"url": "/",
+				"width": 800,
+				"height": 650,
+				"minWidth": 600,
+				"minHeight": 450,
+				"visible": true,
+				"transparent": false,
+				"titleBarStyle": "Overlay",
+				"hiddenTitle": true,
+				"resizable": true,
+				"minimizable": true
+			},
+			{
+				"label": "chatbar",
+				"url": "/desktop-app/chatbar",
+				"width": 600,
+				"height": 250,
+				"visible": false,
+				"visibleOnAllWorkspaces": true,
+				"transparent": true,
+				"decorations": false,
+				"resizable": false,
+				"minimizable": false,
+				"dragDropEnabled": true,
+				"devtools": true
+			}
+		],
+		"security": {
+			"csp": null
+		}
+	},
+	"bundle": {
+		"active": true,
+		"targets": "all",
+		"icon": [
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		]
+	}
+}
