@@ -29,23 +29,31 @@ pub fn on_shortcut(handle: &tauri::AppHandle) -> Result<()> {
     // based on companion chat id: resize window, move window, and set route
     // TODO use time preference
     let time_since_last_chat = Instant::now().duration_since(state.last_chat_time);
-    let mut companion_chat_open = false;
-    if let Some(companion_chat_id) = &state.companion_chat_id {
-        if time_since_last_chat > Duration::from_secs(600) {
+    if state.companion_chat_open {
+        if time_since_last_chat < Duration::from_secs(600) {
             // TODO set resizable, max and min resizable props
-            window.set_size(COMPANION_CHAT_SIZE)?;
-            companion_chat_open = true;
+            println!("companion chat: {}", time_since_last_chat.as_secs());
         } else {
-            state.companion_chat_id = None;
-            window.set_size(CHATBAR_WINDOW_SIZE)?;
+            println!("companion chat expired");
             handle.emit_to("chatbar", "shortcut", "companion chat expired")?;
+            window.set_size(CHATBAR_WINDOW_SIZE)?;
+            move_chatbar(
+                &window,
+                ChatbarPosition::BottomCenter,
+                state.companion_chat_open,
+            )?;
         }
     } else {
         window.set_size(CHATBAR_WINDOW_SIZE)?;
+        move_chatbar(
+            &window,
+            ChatbarPosition::BottomCenter,
+            state.companion_chat_open,
+        )?;
     }
 
     // move after resizing
-    move_chatbar(&window, ChatbarPosition::BottomCenter, companion_chat_open)?;
+    
 
     // show and set focused
     state.visible = true;

@@ -57,7 +57,13 @@
 	import { createOpenAITextStream } from '$lib/apis/streaming';
 	import { queryMemory } from '$lib/apis/memories';
 	import { getAndUpdateUserLocation, getUserSettings } from '$lib/apis/users';
-	import { chatCompleted, generateTitle, generateQueries, generateTags, generateMoACompletion } from '$lib/apis';
+	import {
+		chatCompleted,
+		generateTitle,
+		generateQueries,
+		generateTags,
+		generateMoACompletion
+	} from '$lib/apis';
 
 	import MessageInput from '$lib/components/chat/MessageInput.svelte';
 	import { getTools } from '$lib/apis/tools';
@@ -333,7 +339,6 @@
 		if (!$chatId) {
 			chatIdUnsubscriber = chatId.subscribe(async (value) => {
 				if (!value) {
-					await new Promise((resolve) => setTimeout(resolve, 1000));
 					await initNewChat();
 				}
 			});
@@ -640,7 +645,6 @@
 	};
 
 	const createMessagesList = (responseMessageId: string | null) => {
-		console.log(typeof responseMessageId, responseMessageId);
 		if (responseMessageId === null) {
 			return [];
 		}
@@ -649,13 +653,10 @@
 
 		let messages = [];
 		while (message?.parentId) {
-			console.log(message);
 			messages.unshift(message);
 			message = history.messages[message.parentId];
 		}
 		messages.unshift(message);
-
-		console.log(messages, messages.length);
 
 		return messages;
 	};

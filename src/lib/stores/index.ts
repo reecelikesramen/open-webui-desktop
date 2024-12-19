@@ -3,6 +3,7 @@ import { type Writable, writable } from 'svelte/store';
 import type { GlobalModelConfig, ModelConfig } from '$lib/apis';
 import type { Banner } from '$lib/types';
 import type { Socket } from 'socket.io-client';
+import { DEFAULT_CONFIG, DEFAULT_STATE } from '../../app/constants';
 
 // Backend
 export const WEBUI_NAME = writable(APP_NAME);
@@ -51,6 +52,9 @@ export const showCallOverlay = writable(false);
 export const temporaryChatEnabled = writable(false);
 export const scrollPaginationEnabled = writable(false);
 export const currentChatPage = writable(1);
+
+export const appState = writable(DEFAULT_STATE);
+export const appConfig = writable(DEFAULT_CONFIG);
 
 export type Model = OpenAIModel | OllamaModel;
 

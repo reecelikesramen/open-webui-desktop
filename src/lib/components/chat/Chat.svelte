@@ -639,7 +639,6 @@
 	};
 
 	const createMessagesList = (responseMessageId: string | null) => {
-		console.log(typeof responseMessageId, responseMessageId);
 		if (responseMessageId === null) {
 			return [];
 		}
@@ -648,13 +647,10 @@
 
 		let messages = [];
 		while (message?.parentId) {
-			console.log(message);
 			messages.unshift(message);
 			message = history.messages[message.parentId];
 		}
 		messages.unshift(message);
-
-		console.log(messages, messages.length);
 
 		return messages;
 	};

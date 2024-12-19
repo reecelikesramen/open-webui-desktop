@@ -5,10 +5,10 @@ pub(crate) mod state;
 
 use std::sync::Mutex;
 
-use commands::{set_shortcut, set_shortcut_internal};
+use commands::{set_companion_chat_open, set_shortcut, set_shortcut_internal};
 use prelude::*;
 use state::{AppConfig, AppState, ChatbarPosition};
-use tauri::{AppHandle, Manager, PhysicalPosition, WebviewWindow};
+use tauri::{Manager, PhysicalPosition, WebviewWindow};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 use tauri_plugin_store::StoreExt;
 
@@ -72,7 +72,10 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![set_shortcut])
+        .invoke_handler(tauri::generate_handler![
+            set_shortcut,
+            set_companion_chat_open
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
@@ -92,12 +95,12 @@ pub(crate) fn move_chatbar(
             let window_size = window.outer_size().expect("Failed to get window size");
             let x = monitor.position().x + ((monitor_size.width - window_size.width) / 2) as i32;
             let mut y =
-                monitor.position().y + (monitor_size.height - window_size.height - 57) as i32;
+                monitor.position().y + (monitor_size.height - window_size.height - 207) as i32;
 
             // TODO: padding distance
-            if companion_chat_open {
-                y -= 20;
-            }
+            // if companion_chat_open {
+            //     y -= 20;
+            // }
             (x, y)
         }
         ChatbarPosition::BottomLeft => todo!(),

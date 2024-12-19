@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::time::Instant;
 
 pub(crate) struct AppState {
-    pub companion_chat_id: Option<String>,
+    pub companion_chat_open: bool,
     pub visible: bool,
     pub last_chat_time: Instant,
 }
@@ -10,7 +10,7 @@ pub(crate) struct AppState {
 impl Default for AppState {
     fn default() -> Self {
         Self {
-            companion_chat_id: None,
+            companion_chat_open: false,
             visible: false,
             last_chat_time: Instant::now(),
         }
