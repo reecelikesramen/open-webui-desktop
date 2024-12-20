@@ -42,22 +42,24 @@
 
 <div class="w-full h-full flex flex-col items-center justify-end">
 	<div
-		class="w-[440px] h-[540px] p-3 py-5 text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-900 flex flex-col items-center justify-center rounded-3xl relative"
+		class="w-[440px] h-[540px] p-3 py-5 text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-900 flex flex-col items-center justify-center rounded-3xl relative group"
 		data-tauri-drag-region
 	>
-		<!-- Close button -->
-		<button
-			class="absolute top-3 left-3 w-4 h-4 flex items-center justify-center bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full z-[50]"
-			on:click={() => {
-				getCurrentWindow().hide();
-			}}
-		>
-			<XMark className="size-2.5" strokeWidth="3.5" />
-		</button>
+		<!-- Control buttons container -->
+		<div class="absolute top-3 w-full px-3 flex justify-between opacity-0 transition-opacity duration-200 group-hover:opacity-100 z-[50]">
+			<!-- Close button -->
+			<button
+				class="w-4 h-4 flex items-center justify-center bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full"
+				on:click={() => {
+					getCurrentWindow().hide();
+				}}
+			>
+				<XMark className="size-2.5" strokeWidth="3.5" />
+			</button>
 
-		<!-- Action buttons -->
-		<div class="absolute top-3 right-3 flex gap-2 z-[50]">
-			<Tooltip content={$i18n.t('Open in main window')}>
+			<!-- Right side buttons -->
+			<div class="flex gap-2">
+				<Tooltip content={$i18n.t('Open in main window')}>
 				<button
 					class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full"
 					title="Open in main window"
