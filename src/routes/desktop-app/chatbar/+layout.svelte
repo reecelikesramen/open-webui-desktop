@@ -10,9 +10,10 @@
 		settings,
 		WEBUI_NAME,
 		theme,
-		models
+		models,
+		appState
 	} from '$lib/stores';
-	import { listen } from '@tauri-apps/api/event';
+	import { listen, type UnlistenFn } from '@tauri-apps/api/event';
 	import { Toaster } from 'svelte-sonner';
 	import { APP_STORES_CHANGED, CHATBAR_WINDOW_LABEL } from '../../../app/constants';
 	import { getCurrentWindow, Window } from '@tauri-apps/api/window';
@@ -32,34 +33,38 @@
 	}
 
 	// Sync lib stores with Main Window
-	const unlisten = listen(APP_STORES_CHANGED, (event: { payload: StoreChangedPayload }) => {
-		console.log('stores changed:', event.payload);
-		switch (event.payload.store_name) {
-			case 'models':
-				$models = event.payload.store;
-				break;
-			case 'settings':
-				$settings = event.payload.store;
-				break;
-			case 'config':
-				$config = event.payload.store;
-				break;
-			case 'user':
-				$user = event.payload.store;
-				break;
-			case 'temporaryChatEnabled':
-				$temporaryChatEnabled = event.payload.store;
-				break;
-			case 'tools':
-				$tools = event.payload.store;
-				break;
-			case 'theme':
-				$theme = event.payload.store;
-				break;
+	const unlistenStoreChange = listen(
+		APP_STORES_CHANGED,
+		(event: { payload: StoreChangedPayload }) => {
+			console.log('stores changed:', event.payload);
+			switch (event.payload.store_name) {
+				case 'models':
+					$models = event.payload.store;
+					break;
+				case 'settings':
+					$settings = event.payload.store;
+					break;
+				case 'config':
+					$config = event.payload.store;
+					break;
+				case 'user':
+					$user = event.payload.store;
+					break;
+				case 'temporaryChatEnabled':
+					$temporaryChatEnabled = event.payload.store;
+					break;
+				case 'tools':
+					$tools = event.payload.store;
+					break;
+				case 'theme':
+					$theme = event.payload.store;
+					break;
+			}
 		}
-	});
+	);
 
 	onMount(() => {
+		let unlistenFocusChange: UnlistenFn;
 		(async () => {
 			// Move chat bar
 			await moveChatBar($appConfig.chatBarPositionPreference, false);
@@ -72,10 +77,12 @@
 			await chatBarWindow.setShadow(true);
 
 			// Set lose focus: hide
-			await chatBarWindow.onFocusChanged(async ({ payload: focused }) => {
+			unlistenFocusChange = await chatBarWindow.onFocusChanged(async ({ payload: focused }) => {
 				if (!focused) {
 					// Hide the window and remove Escape close window shortcut
-					await chatBarWindow.hide();
+					if (!$appState.companionChatOpen) {
+						await chatBarWindow.hide();
+					}
 					await unregister('Escape');
 				} else {
 					await register('Escape', closeChatBar);
@@ -84,7 +91,8 @@
 		})();
 
 		return async () => {
-			(await unlisten)();
+			unlistenFocusChange();
+			(await unlistenStoreChange)();
 		};
 	});
 

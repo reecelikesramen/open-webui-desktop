@@ -110,7 +110,10 @@
 
 	let companionChatOpen: boolean = false;
 	$: companionChatOpen = !!chatIdProp || createMessagesList(history.currentId).length > 0;
-	$: $appState.companionChatOpen = companionChatOpen;
+	$: {
+		console.log('Updating companionChatOpen', companionChatOpen);
+		$appState.companionChatOpen = companionChatOpen;
+	}
 
 	let chat = null;
 	let tags = [];
@@ -380,6 +383,7 @@
 
 		// Listen for the COMPANION_CHAT_EXPIRED event,
 		getCurrentWindow().listen(COMPANION_CHAT_EXPIRED, async () => {
+			console.log('test');
 			await initNewChat();
 		});
 	});

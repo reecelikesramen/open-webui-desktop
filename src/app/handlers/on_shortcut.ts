@@ -29,7 +29,11 @@ export default async function onShortcut(event: ShortcutEvent) {
 
 	// if visible, then hide
 	if (await window.isVisible()) {
-		await window.hide();
+		if (state.companionChatOpen && !(await window.isFocused())) {
+			await window.setFocus();
+		} else {
+			await window.hide();
+		}
 		return;
 	}
 
@@ -38,6 +42,7 @@ export default async function onShortcut(event: ShortcutEvent) {
 	let companionChatOpen = state.companionChatOpen;
 	let resetChatTime = resetChatTimePreferenceToSeconds(config.resetChatTimePreference);
 	let chatBarPosition = config.chatBarPositionPreference;
+	console.log('timeSinceLastChat', timeSinceLastChat, 'resetChatTime', resetChatTime);
 	if (companionChatOpen && timeSinceLastChat > resetChatTime) {
 		await window.setResizable(false);
 		await window.emitTo('chatbar', COMPANION_CHAT_EXPIRED);
