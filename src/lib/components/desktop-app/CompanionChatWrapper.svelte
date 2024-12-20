@@ -44,7 +44,9 @@
 		<!-- Close button -->
 		<button
 			class="absolute top-3 left-3 w-5 h-5 flex items-center justify-center border border-gray-300 dark:border-gray-700 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 z-[50]"
-			on:click={() => window.close()}
+			on:click={() => {
+				getCurrentWindow().hide();
+			}}
 		>
 			<svg
 				xmlns="http://www.w3.org/2000/svg"
