@@ -31,7 +31,9 @@
 		showOverview,
 		chatTitle,
 		showArtifacts,
-		tools
+		tools,
+		appConfig,
+		appState
 	} from '$lib/stores';
 	import {
 		convertMessagesToHistory,
@@ -71,6 +73,8 @@
 	import CompanionChatWrapper from './CompanionChatWrapper.svelte';
 	import Messages from '../chat/Messages.svelte';
 	import { toast } from 'svelte-sonner';
+	import { getCurrentWindow } from '@tauri-apps/api/window';
+	import { COMPANION_CHAT_EXPIRED } from '../../../app/constants';
 
 	export let chatIdProp = '';
 
@@ -106,6 +110,7 @@
 
 	let companionChatOpen: boolean = false;
 	$: companionChatOpen = !!chatIdProp || createMessagesList(history.currentId).length > 0;
+	$: $appState.companionChatOpen = companionChatOpen;
 
 	let chat = null;
 	let tags = [];
@@ -135,7 +140,7 @@
 				const chatInput = document.getElementById('chat-input');
 				chatInput?.focus();
 			} else {
-				await goto('/');
+				await goto('/desktop-app/chatbar');
 			}
 		})();
 	}
@@ -344,7 +349,7 @@
 			});
 		} else {
 			if ($temporaryChatEnabled) {
-				await goto('/');
+				await goto('/desktop-app/chatbar');
 			}
 		}
 
@@ -372,6 +377,11 @@
 		chatInput?.focus();
 
 		chats.subscribe(() => {});
+
+		// Listen for the COMPANION_CHAT_EXPIRED event,
+		getCurrentWindow().listen(COMPANION_CHAT_EXPIRED, async () => {
+			await initNewChat();
+		});
 	});
 
 	onDestroy(() => {
@@ -586,7 +596,7 @@
 	const loadChat = async () => {
 		chatId.set(chatIdProp);
 		chat = await getChatById(localStorage.token, $chatId).catch(async (error) => {
-			await goto('/');
+			await goto('/desktop-app/chatbar');
 			return null;
 		});
 
@@ -844,9 +854,9 @@
 	//////////////////////////
 
 	const submitPrompt = async (userPrompt, { _raw = false } = {}) => {
-		console.log($settings);
-		console.log($config);
 		console.log('submitPrompt', userPrompt, $chatId);
+
+		$appState.lastChatTime = Date.now();
 
 		const messages = createMessagesList(history.currentId);
 		const _selectedModels = selectedModels.map((modelId) =>

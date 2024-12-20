@@ -39,7 +39,6 @@ export default async function onShortcut(event: ShortcutEvent) {
 	let resetChatTime = resetChatTimePreferenceToSeconds(config.resetChatTimePreference);
 	let chatBarPosition = config.chatBarPositionPreference;
 	if (companionChatOpen && timeSinceLastChat > resetChatTime) {
-		console.log('companion chat expired');
 		await window.setResizable(false);
 		await window.emitTo('chatbar', COMPANION_CHAT_EXPIRED);
 		await window.setSize(CHATBAR_WINDOW_SIZE);

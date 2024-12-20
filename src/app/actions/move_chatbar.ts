@@ -20,7 +20,7 @@ export default async function moveChatBar(
 	switch (chatBarPosition) {
 		case 'BOTTOM_CENTER':
 			x = Math.floor(monitor.position.x + (monitor.size.width - windowSize.width) / 2);
-			y = Math.floor(monitor.position.y + (monitor.size.height - windowSize.height - 207));
+			y = Math.floor(monitor.position.y + (monitor.size.height - windowSize.height - 297));
 			break;
 		case 'BOTTOM_LEFT':
 			throw new Error('Not implemented');

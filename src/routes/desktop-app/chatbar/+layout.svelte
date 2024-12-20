@@ -15,7 +15,7 @@
 	import { listen } from '@tauri-apps/api/event';
 	import { Toaster } from 'svelte-sonner';
 	import { APP_STORES_CHANGED, CHATBAR_WINDOW_LABEL } from '../../../app/constants';
-	import { Window } from '@tauri-apps/api/window';
+	import { getCurrentWindow, Window } from '@tauri-apps/api/window';
 	import { setShortcut } from '../../../app/commands/set_shortcut';
 	import { register, unregister, type ShortcutEvent } from '@tauri-apps/plugin-global-shortcut';
 
@@ -68,10 +68,7 @@
 			await setShortcut($appConfig.shortcut);
 
 			// Set lose focus: hide
-			const chatBarWindow = await Window.getByLabel(CHATBAR_WINDOW_LABEL);
-			if (!chatBarWindow) {
-				throw new Error('Failed to get chatbar window');
-			}
+			const chatBarWindow = getCurrentWindow();
 			await chatBarWindow.onFocusChanged(async ({ payload: focused }) => {
 				if (!focused) {
 					// Hide the window and remove Escape close window shortcut
@@ -93,13 +90,7 @@
 			return;
 		}
 
-		let chatBarWindow = await Window.getByLabel(CHATBAR_WINDOW_LABEL);
-		if (!chatBarWindow) {
-			throw new Error('Failed to get chatbar window');
-			return;
-		}
-
-		await chatBarWindow.hide();
+		await getCurrentWindow().hide();
 	};
 </script>
 
