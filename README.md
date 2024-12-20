@@ -15,12 +15,12 @@ Send a message in the chatbar and the chat companion will keep that chat availab
 
 ## Installing
 
-1. Have modern `rust`, Python 3.11 (preferably as a venv) and any Node.js package manager compatible with `package.json`, I used `npm` or `deno`
+1. Have modern Rust, Python 3.11 (preferably as a venv) and any Node.js package manager compatible with `package.json`, I used npm or deno
 1. Clone this repo
-1. Run `tauri run dev` and begin the long first build process
+1. Run `npm run tauri dev` or `deno task tauri dev` and begin the long first-time build process
 1. Clone [Open WebUI](https://github.com/open-webui/open-webui)
 1. Follow their instructions to start **only the backend dev server**
-1. By the time this is done the app should launch and greet you with the Open WebUI setup screen.
+1. By the time this is done the app should launch and greet you with the Open WebUI setup screen
 
 ## Roadmap (roughly in order)
 
