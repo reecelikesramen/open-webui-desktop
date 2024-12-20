@@ -4,13 +4,14 @@
 
 ## Screenshots
 
-![Desktop GUI](./screenshots/desktop-gui.png)
+<img src="./screenshots/desktop-gui.png" width=300 /><br />
 Panel-inspired look for Open WebUI on the desktop
 
-![Chatbar](./screenshots/chatbar.png)
+<img src="./screenshots/chatbar.png" width=300 /><br />
 Always on top ChatGPT and Spotlight inspired chatbar. Global hotkey is currently hardcoded to _Ctrl+Space_. Pressing _Esc_ or losing focus hides the window.
 
-![Chat Companion](./screenshots/chat-companion.png)
+<img src="./screenshots/chat-companion-1.png" width=300 /><br />
+<img src="./screenshots/chat-companion-2.png" width=300 /><br />
 Send a message in the chatbar and the chat companion will keep that chat available for 10 minutes after the most recent message. Currently a hardcoded value. It also retains its position on the screen.
 
 ## Installing
