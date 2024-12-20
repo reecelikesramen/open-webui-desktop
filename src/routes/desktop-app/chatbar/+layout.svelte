@@ -67,8 +67,11 @@
 			// Set global shortcut
 			await setShortcut($appConfig.shortcut);
 
-			// Set lose focus: hide
+			// Add shadows
 			const chatBarWindow = getCurrentWindow();
+			await chatBarWindow.setShadow(true);
+
+			// Set lose focus: hide
 			await chatBarWindow.onFocusChanged(async ({ payload: focused }) => {
 				if (!focused) {
 					// Hide the window and remove Escape close window shortcut
