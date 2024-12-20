@@ -47,7 +47,7 @@
 	>
 		<!-- Control buttons container -->
 		<div
-			class="absolute top-3 w-full px-3 flex justify-between opacity-0 transition-opacity duration-200 group-hover:opacity-100 z-[50]"
+			class="absolute top-3 w-full px-3 flex justify-between opacity-0 transition-opacity duration-500 delay-500 group-hover:opacity-100 group-hover:delay-0 z-[50]"
 		>
 			<!-- Close button -->
 			<button
