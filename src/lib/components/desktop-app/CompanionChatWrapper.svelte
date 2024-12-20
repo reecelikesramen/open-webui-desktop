@@ -6,8 +6,8 @@
 	import { appConfig } from '$lib/stores';
 	import XMark from '../icons/XMark.svelte';
 	import PencilSquare from '../icons/PencilSquare.svelte';
-	import Pencil from '../icons/Pencil.svelte';
-	import PencilSolid from '../icons/PencilSolid.svelte';
+	import Tooltip from '../common/Tooltip.svelte';
+	import i18n from '$lib/i18n';
 
 	onMount(() => {
 		(async () => {
@@ -57,38 +57,45 @@
 
 		<!-- Action buttons -->
 		<div class="absolute top-3 right-3 flex gap-2 z-[50]">
-			<button
-				class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full"
-				title="Open in main window"
-				on:click={() => {
-					/* TODO: Implement open in main window */
-				}}
-			>
-				<svg 
-					xmlns="http://www.w3.org/2000/svg" 
-					class="h-4 w-4" 
-					viewBox="0 0 24 24" 
-					fill="none" 
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
+			<Tooltip content={$i18n.t('Open in main window')}>
+				<button
+					class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full"
+					title="Open in main window"
+					on:click={() => {
+						/* TODO: Implement open in main window */
+					}}
 				>
-					<path d="M4 6h12a2 2 0 0 1 2 2v2" />
-					<path d="M4 6v12a2 2 0 0 0 2 2h2" />
-					<rect x="16" y="16" width="4" height="4" rx="1" />
-					<line x1="16" y1="16" x2="6" y2="6" />
-				</svg>
-			</button>
-			<button
-				class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full"
-				title="Start new chat"
-				on:click={() => {
-					/* TODO: Implement start new chat */
-				}}
-			>
-				<PencilSquare className="size-4" strokeWidth="2" />
-			</button>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="size-4"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="0"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						version="1.1"
+						xmlns:xlink="http://www.w3.org/1999/xlink"
+					>
+						<path
+							d="m18 1.5.2.005A4 4 0 0 1 22 5.5v8l-.005.2A4 4 0 0 1 18 17.5l-.005.2A4 4 0 0 1 14 21.5H6l-.2-.005A4 4 0 0 1 2 17.5v-8l.005-.2A4 4 0 0 1 6 5.5l.005-.2A4 4 0 0 1 10 1.5zm-12 6-.15.005A2 2 0 0 0 4 9.5v8l.005.15A2 2 0 0 0 6 19.5h8l.15-.005A2 2 0 0 0 16 17.5h-6l-.2-.005A4 4 0 0 1 6 13.5zm12-4h-8l-.15.005A2 2 0 0 0 8 5.5v8l.005.15A2 2 0 0 0 10 15.5h8a2 2 0 0 0 2-2v-8l-.005-.15A2 2 0 0 0 18 3.5m-1 2a.98.98 0 0 1 .828.438l.025.04a1 1 0 0 1 .148.583L18 10.5a1 1 0 0 1-1.993.117L16 10.5V8.914l-3.293 3.293a1 1 0 0 1-1.497-1.32l.083-.094L14.584 7.5H13a1 1 0 0 1-.993-.883L12 6.5a1 1 0 0 1 .883-.993L13 5.5z"
+							fill="currentColor"
+							stroke="none"
+						></path>
+					</svg></button
+				>
+			</Tooltip>
+			<Tooltip content={$i18n.t('New chat')}>
+				<button
+					class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full"
+					title="Start new chat"
+					on:click={() => {
+						/* TODO: Implement start new chat */
+					}}
+				>
+					<PencilSquare className="size-4" strokeWidth="2" />
+				</button>
+			</Tooltip>
 		</div>
 
 		<slot />

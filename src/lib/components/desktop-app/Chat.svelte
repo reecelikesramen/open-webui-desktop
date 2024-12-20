@@ -75,6 +75,7 @@
 	import { toast } from 'svelte-sonner';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { COMPANION_CHAT_EXPIRED } from '../../../app/constants';
+	import type { UnlistenFn } from '@tauri-apps/api/event';
 
 	export let chatIdProp = '';
 
@@ -338,54 +339,64 @@
 		}
 	};
 
-	onMount(async () => {
-		console.log('mounted');
-		window.addEventListener('message', onMessageHandler);
-		$socket?.on('chat-events', chatEventHandler);
-		console.log('Models on mount: ', $models);
+	onMount(() => {
+		let unlistenCompanionChatExpired: UnlistenFn;
+		(async () => {
+			console.log('mounted');
+			window.addEventListener('message', onMessageHandler);
+			$socket?.on('chat-events', chatEventHandler);
+			console.log('Models on mount: ', $models);
 
-		if (!$chatId) {
-			chatIdUnsubscriber = chatId.subscribe(async (value) => {
+			if (!$chatId) {
+				chatIdUnsubscriber = chatId.subscribe(async (value) => {
+					if (!value) {
+						await initNewChat();
+					}
+				});
+			} else {
+				if ($temporaryChatEnabled) {
+					await goto('/desktop-app/chatbar');
+				}
+			}
+
+			showControls.subscribe(async (value) => {
+				if (controlPane && !$mobile) {
+					try {
+						if (value) {
+							controlPaneComponent.openPane();
+						} else {
+							controlPane.collapse();
+						}
+					} catch (e) {
+						// ignore
+					}
+				}
+
 				if (!value) {
-					await initNewChat();
+					showCallOverlay.set(false);
+					showOverview.set(false);
+					showArtifacts.set(false);
 				}
 			});
-		} else {
-			if ($temporaryChatEnabled) {
-				await goto('/desktop-app/chatbar');
-			}
-		}
 
-		showControls.subscribe(async (value) => {
-			if (controlPane && !$mobile) {
-				try {
-					if (value) {
-						controlPaneComponent.openPane();
-					} else {
-						controlPane.collapse();
-					}
-				} catch (e) {
-					// ignore
+			const chatInput = document.getElementById('chat-input');
+			chatInput?.focus();
+
+			chats.subscribe(() => {});
+
+			// Listen for the COMPANION_CHAT_EXPIRED event,
+			unlistenCompanionChatExpired = await getCurrentWindow().listen(
+				COMPANION_CHAT_EXPIRED,
+				async () => {
+					console.log('test');
+					await initNewChat();
 				}
-			}
+			);
+		})();
 
-			if (!value) {
-				showCallOverlay.set(false);
-				showOverview.set(false);
-				showArtifacts.set(false);
-			}
-		});
-
-		const chatInput = document.getElementById('chat-input');
-		chatInput?.focus();
-
-		chats.subscribe(() => {});
-
-		// Listen for the COMPANION_CHAT_EXPIRED event,
-		getCurrentWindow().listen(COMPANION_CHAT_EXPIRED, async () => {
-			console.log('test');
-			await initNewChat();
-		});
+		return () => {
+			unlistenCompanionChatExpired();
+		};
 	});
 
 	onDestroy(() => {

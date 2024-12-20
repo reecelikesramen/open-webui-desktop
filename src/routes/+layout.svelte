@@ -40,7 +40,9 @@
 	} from '../app/state';
 	import { unregisterAll } from '@tauri-apps/plugin-global-shortcut';
 	import { DEFAULT_CONFIG, DEFAULT_STATE } from '../app/constants';
-	import { getCurrentWindow } from '@tauri-apps/api/window';
+	import { getCurrentWindow, Window } from '@tauri-apps/api/window';
+	import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+	import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 
 	let loadingProgress = spring(0, {
 		stiffness: 0.05
@@ -146,10 +148,19 @@
 			}
 		};
 
+		let unlistenReopen: UnlistenFn;
 		(async () => {
 			/////////////////////////////////
 			// INITIALIZE APP STATE
 			/////////////////////////////////
+
+			// Reopen event listener
+			unlistenReopen = await listen('reopen', async () => {
+				if (await WebviewWindow.getByLabel('main')) {
+					console.log('main window already open');
+					return;
+				}
+			});
 
 			// Load the store
 			store = await load('app.json', { autoSave: true });
@@ -294,6 +305,9 @@
 
 			// Unregister all global shortcuts
 			await unregisterAll();
+
+			// Unlisten to Reopen event
+			unlistenReopen();
 		};
 	});
 
