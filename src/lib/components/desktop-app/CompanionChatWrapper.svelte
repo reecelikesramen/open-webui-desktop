@@ -42,12 +42,12 @@
 
 <div class="w-full h-full flex flex-col items-center justify-end">
 	<div
-		class="w-[440px] h-[540px] p-3 py-5 text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-900 flex flex-col items-center justify-center rounded-3xl relative group"
+		class="w-[440px] h-[540px] p-3 pb-5 pt-0 text-gray-700 dark:text-gray-100 bg-white dark:bg-gray-900 flex flex-col items-center justify-center rounded-3xl relative group"
 		data-tauri-drag-region
 	>
 		<!-- Control buttons container -->
 		<div
-			class="absolute top-3 w-full px-3 flex justify-between opacity-0 transition-opacity duration-500 delay-500 group-hover:opacity-100 group-hover:delay-0 z-[50]"
+			class="absolute top-3 w-full px-3 flex justify-between opacity-0 bg-transparent transition-opacity transition-background duration-400 delay-500 group-hover:opacity-100 group-hover:bg-white group-hover:dark:bg-gray-900 group-hover:delay-0 z-[50]"
 		>
 			<!-- Close button -->
 			<button
@@ -71,7 +71,7 @@
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
-							class="size-4"
+							class="size-[1.12rem]"
 							viewBox="0 0 24 24"
 							fill="none"
 							stroke="currentColor"
@@ -97,7 +97,7 @@
 							/* TODO: Implement start new chat */
 						}}
 					>
-						<PencilSquare className="size-4" strokeWidth="2" />
+						<PencilSquare className="size-[1.12rem]" strokeWidth="2" />
 					</button>
 				</Tooltip>
 			</div>
