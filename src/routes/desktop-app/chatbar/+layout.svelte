@@ -19,6 +19,7 @@
 	import { getCurrentWindow, Window } from '@tauri-apps/api/window';
 	import { setShortcut } from '../../../app/commands/set_shortcut';
 	import { register, unregister, type ShortcutEvent } from '@tauri-apps/plugin-global-shortcut';
+	import { applyTheme } from '$lib/utils';
 
 	interface StoreChangedPayload {
 		store_name:
@@ -62,6 +63,12 @@
 			}
 		}
 	);
+
+	$: {
+		localStorage.setItem('theme', $theme);
+		console.log('App theme changed to', $theme);
+		applyTheme($theme);
+	}
 
 	onMount(() => {
 		let unlistenFocusChange: UnlistenFn;

@@ -96,6 +96,8 @@ export const SUPPORTED_FILE_EXTENSIONS = [
 
 export const PASTED_TEXT_CHARACTER_LIMIT = 1000;
 
+export const THEMES = ['dark', 'light', 'rose-pine dark', 'rose-pine-dawn light', 'oled-dark'];
+
 const IS_TAURI = '__TAURI_INTERNALS__' in window || '__TAURI__' in window;
 export default IS_TAURI; // running on a desktop app or a mobile app - but not in the browser
 export const isWeb = !IS_TAURI; // running on the browser on either desktop or mobile - but not as a tauri app
