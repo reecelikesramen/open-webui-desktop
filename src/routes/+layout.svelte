@@ -351,7 +351,7 @@
 
 	const onPointerDown = async (event: PointerEvent) => {
 		if (event.button === 0) {
-			if (NON_DRAGGING_TAGS.includes(event.target?.tagName)) {
+			if (NON_DRAGGING_TAGS.includes(event.target?.tagName?.toUpperCase())) {
 				return;
 			} else if (
 				event.target?.tagName === 'DIV' &&

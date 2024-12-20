@@ -10,6 +10,7 @@ import {
 import moveChatBar from '../actions/move_chatbar';
 import { resetChatTimePreferenceToSeconds, type AppConfig, type AppState } from '../state';
 import type { ShortcutEvent } from '@tauri-apps/plugin-global-shortcut';
+import { tick } from 'svelte';
 
 export default async function onShortcut(event: ShortcutEvent) {
 	console.log('onShortcut');
@@ -44,10 +45,11 @@ export default async function onShortcut(event: ShortcutEvent) {
 	let chatBarPosition = config.chatBarPositionPreference;
 	console.log('timeSinceLastChat', timeSinceLastChat, 'resetChatTime', resetChatTime);
 	if (companionChatOpen && timeSinceLastChat > resetChatTime) {
-		await window.setResizable(false);
 		await window.emitTo('chatbar', COMPANION_CHAT_EXPIRED);
+		await window.setResizable(false);
 		await window.setSize(CHATBAR_WINDOW_SIZE);
 		await moveChatBar(chatBarPosition, companionChatOpen);
+		await tick();
 	} else if (!companionChatOpen) {
 		await moveChatBar(chatBarPosition, companionChatOpen);
 	}
