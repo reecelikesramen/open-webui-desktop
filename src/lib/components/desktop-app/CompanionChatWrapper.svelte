@@ -76,7 +76,8 @@
 				>
 					<path d="M4 6h12a2 2 0 0 1 2 2v2" />
 					<path d="M4 6v12a2 2 0 0 0 2 2h2" />
-					<path d="M14 18l-2 2v-4h4l-2 2z" />
+					<rect x="16" y="16" width="4" height="4" rx="1" />
+					<line x1="16" y1="16" x2="6" y2="6" />
 				</svg>
 			</button>
 			<button
