@@ -64,19 +64,19 @@
 					/* TODO: Implement open in main window */
 				}}
 			>
-				<svg
-					xmlns="http://www.w3.org/2000/svg"
-					class="h-4 w-4"
-					viewBox="0 0 24 24"
-					fill="none"
+				<svg 
+					xmlns="http://www.w3.org/2000/svg" 
+					class="h-4 w-4" 
+					viewBox="0 0 24 24" 
+					fill="none" 
 					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
 				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-					/>
+					<path d="M4 6h12a2 2 0 0 1 2 2v2" />
+					<path d="M4 6v12a2 2 0 0 0 2 2h2" />
+					<path d="M14 18l-2 2v-4h4l-2 2z" />
 				</svg>
 			</button>
 			<button
