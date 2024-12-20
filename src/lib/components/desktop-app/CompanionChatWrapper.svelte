@@ -9,6 +9,9 @@
 	import Tooltip from '../common/Tooltip.svelte';
 	import i18n from '$lib/i18n';
 
+	export let startNewChat: () => void | Promise<void> = () => {};
+	export let openInMainWindow: () => void | Promise<void> = () => {};
+
 	onMount(() => {
 		(async () => {
 			console.log('CompanionChatWrapper mounted');
@@ -47,11 +50,11 @@
 	>
 		<!-- Control buttons container -->
 		<div
-			class="absolute top-0 py-3 w-[calc(100%-3rem)] flex justify-between opacity-0 bg-transparent transition-all duration-400 delay-500 group-hover:opacity-100 group-hover:bg-white group-hover:dark:bg-gray-900 group-hover:delay-0 z-[50]"
+			class="absolute top-0 pt-3 pb-1 w-[calc(100%-3rem)] flex justify-between opacity-0 bg-transparent transition-all duration-400 delay-500 group-hover:opacity-100 group-hover:bg-white group-hover:dark:bg-gray-900 group-hover:delay-0 z-[50]"
 		>
 			<!-- Close button -->
 			<button
-				class="mt-1 ml-1 w-4 h-4 flex items-center justify-center bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full"
+				class="ml-[-0.75rem] w-4 h-4 flex items-center justify-center bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-100 transition rounded-full"
 				on:click={() => {
 					getCurrentWindow().hide();
 				}}
@@ -60,14 +63,12 @@
 			</button>
 
 			<!-- Right side buttons -->
-			<div class="flex gap-2">
+			<div class="mt-[-0.25rem] mr-[-0.75rem] flex gap-2">
 				<Tooltip content={$i18n.t('Open in main window')}>
 					<button
 						class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full"
 						title="Open in main window"
-						on:click={() => {
-							/* TODO: Implement open in main window */
-						}}
+						on:click={openInMainWindow}
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -93,9 +94,7 @@
 					<button
 						class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-800 rounded-full"
 						title="Start new chat"
-						on:click={() => {
-							/* TODO: Implement start new chat */
-						}}
+						on:click={startNewChat}
 					>
 						<PencilSquare className="size-[1.12rem]" strokeWidth="2" />
 					</button>

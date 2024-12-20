@@ -10,9 +10,12 @@
 		user,
 		WEBUI_NAME
 	} from '$lib/stores';
-	import { emit } from '@tauri-apps/api/event';
+	import { emit, listen, type UnlistenFn } from '@tauri-apps/api/event';
 	import { Toaster } from 'svelte-sonner';
-	import { APP_STORES_CHANGED } from '../../app/constants';
+	import { APP_STORES_CHANGED, OPEN_IN_MAIN_WINDOW } from '../../app/constants';
+	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { getCurrentWindow } from '@tauri-apps/api/window';
 
 	// Provide store update to chatbar
 	$: emit(APP_STORES_CHANGED, { store_name: 'models', store: $models });
@@ -22,6 +25,25 @@
 	$: emit(APP_STORES_CHANGED, { store_name: 'temporaryChatEnabled', store: $temporaryChatEnabled });
 	$: emit(APP_STORES_CHANGED, { store_name: 'tools', store: $tools });
 	$: emit(APP_STORES_CHANGED, { store_name: 'theme', store: $theme });
+
+	onMount(() => {
+		let unlistenOpenInMainWindow: UnlistenFn;
+		(async () => {
+			unlistenOpenInMainWindow = await listen(OPEN_IN_MAIN_WINDOW, async (event) => {
+				if (!event.payload || !event.payload.chatId) {
+					console.warn('open in main window called without chatId');
+					return;
+				}
+				await goto(`/c/${event.payload.chatId}`);
+				console.log('Chat', event.payload.chatId, 'opened in main window');
+				await getCurrentWindow().setFocus();
+			});
+		})();
+
+		return () => {
+			unlistenOpenInMainWindow();
+		};
+	});
 </script>
 
 <svelte:head>

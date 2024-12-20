@@ -74,8 +74,8 @@
 	import Messages from '../chat/Messages.svelte';
 	import { toast } from 'svelte-sonner';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
-	import { COMPANION_CHAT_EXPIRED } from '../../../app/constants';
-	import type { UnlistenFn } from '@tauri-apps/api/event';
+	import { COMPANION_CHAT_EXPIRED, OPEN_IN_MAIN_WINDOW } from '../../../app/constants';
+	import { emitTo, listen, type UnlistenFn } from '@tauri-apps/api/event';
 
 	export let chatIdProp = '';
 
@@ -385,13 +385,9 @@
 			chats.subscribe(() => {});
 
 			// Listen for the COMPANION_CHAT_EXPIRED event,
-			unlistenCompanionChatExpired = await getCurrentWindow().listen(
-				COMPANION_CHAT_EXPIRED,
-				async () => {
-					console.log('test');
-					await initNewChat();
-				}
-			);
+			unlistenCompanionChatExpired = await listen(COMPANION_CHAT_EXPIRED, async () => {
+				await initNewChat();
+			});
 		})();
 
 		return () => {
@@ -2193,9 +2189,22 @@
 			}
 		}
 	};
+
+	const openInMainWindow = async () => {
+		emitTo('main', OPEN_IN_MAIN_WINDOW, {
+			chatId: $chatId
+		});
+
+		await getCurrentWindow().hide();
+		await initNewChat();
+	};
 </script>
 
-<svelte:component this={companionChatOpen ? CompanionChatWrapper : ChatbarWrapper}>
+<svelte:component
+	this={companionChatOpen ? CompanionChatWrapper : ChatbarWrapper}
+	startNewChat={initNewChat}
+	{openInMainWindow}
+>
 	{#if companionChatOpen}
 		<div
 			class=" pb-2.5 flex flex-col justify-between w-full flex-auto overflow-auto h-0 max-w-full z-10 scrollbar-hidden"

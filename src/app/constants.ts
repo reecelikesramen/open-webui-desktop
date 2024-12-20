@@ -12,6 +12,8 @@ export const COMPANION_CHAT_SIZE = new LogicalSize(600, 600); // ChatGPT panel s
 // event names
 export const COMPANION_CHAT_EXPIRED = 'COMPANION_CHAT_EXPIRED';
 export const APP_STORES_CHANGED = 'APP_STORES_CHANGED';
+export const OPEN_IN_MAIN_WINDOW = 'OPEN_IN_MAIN_WINDOW';
+export const OPEN_IN_COMPANION_CHAT = 'OPEN_IN_COMPANION_CHAT';
 
 // state
 export const DEFAULT_STATE: AppState = {
