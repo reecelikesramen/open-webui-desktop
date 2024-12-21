@@ -344,10 +344,8 @@
 	onMount(() => {
 		let unlistenCompanionChatExpired: UnlistenFn;
 		(async () => {
-			console.log('mounted');
 			window.addEventListener('message', onMessageHandler);
 			$socket?.on('chat-events', chatEventHandler);
-			console.log('Models on mount: ', $models);
 
 			if (!$chatId) {
 				chatIdUnsubscriber = chatId.subscribe(async (value) => {
@@ -2202,12 +2200,11 @@
 	};
 
 	let placeholder = writable('');
-	$: console.log('selectedModels', selectedModels);
 	$: $placeholder =
 		selectedModels[0]?.trim() === ''
 			? 'Select a model'
 			: selectedModels.length === 1
-				? `Message ${selectedModels[0]}`
+				? `Message ${$models.find((model) => model.id === selectedModels[0])?.name}`
 				: 'Send a message';
 </script>
 
