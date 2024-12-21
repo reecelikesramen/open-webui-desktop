@@ -1,53 +1,50 @@
 <script lang="ts">
 	import { DropdownMenu } from 'bits-ui';
-	import { marked } from 'marked';
-	import Fuse from 'fuse.js';
-
 	import { flyAndScale } from '$lib/utils/transitions';
-	import { createEventDispatcher, onMount, getContext, tick } from 'svelte';
-
-	import ChevronDown from '$lib/components/icons/ChevronDown.svelte';
-	import Check from '$lib/components/icons/Check.svelte';
-	import Search from '$lib/components/icons/Search.svelte';
-
-	import { deleteModel, getOllamaVersion, pullModel } from '$lib/apis/ollama';
-
-	import { user, MODEL_DOWNLOAD_POOL, models, mobile, temporaryChatEnabled } from '$lib/stores';
-	import { toast } from 'svelte-sonner';
-	import { capitalizeFirstLetter, sanitizeResponseContent, splitStream } from '$lib/utils';
-	import { getModels } from '$lib/apis';
-
-	import Tooltip from '$lib/components/common/Tooltip.svelte';
+	import { getContext, onMount } from 'svelte';
 	import Switch from '$lib/components/common/Switch.svelte';
-	import ChatBubbleOval from '$lib/components/icons/ChatBubbleOval.svelte';
+
+	import {
+		user,
+		tools as _tools,
+		temporaryChatEnabled,
+		MODEL_DOWNLOAD_POOL,
+		models,
+		mobile
+	} from '$lib/stores';
+
+	import Dropdown from '$lib/components/common/Dropdown.svelte';
+	import Tooltip from '$lib/components/common/Tooltip.svelte';
+	import DocumentArrowUpSolid from '$lib/components/icons/DocumentArrowUpSolid.svelte';
+	import ChatBubbleOval from '../icons/ChatBubbleOval.svelte';
 	import { goto } from '$app/navigation';
+	import Search from '../icons/Search.svelte';
+	import { toast } from 'svelte-sonner';
+	import { getOllamaVersion, pullModel } from '$lib/apis/ollama';
+	import { sanitizeResponseContent, splitStream } from '$lib/utils';
+	import Fuse from 'fuse.js';
+	import { marked } from 'marked';
+	import Check from '../icons/Check.svelte';
 
-	const i18n = getContext('i18n');
-	const dispatch = createEventDispatcher();
-
+	export let onClose: Function;
 	export let id = '';
 	export let value = '';
-	export let placeholder = 'Select a model';
-	export let searchEnabled = true;
-	export let searchPlaceholder = $i18n.t('Search models');
+	export let selectedModels = [''];
 
-	export let showTemporaryChatControl = false;
-
-	export let items: {
-		label: string;
-		value: string;
-		model: Model;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		[key: string]: any;
-	}[] = [];
-
-	export let className = 'w-[32rem]';
-	export let triggerClassName = 'text-lg';
-
+	const i18n = getContext('i18n');
 	let show = false;
+	let showTemporaryChatControl =
+		$user.role === 'user' ? ($user?.permissions?.chat?.temporary ?? true) : true;
+
+	let items = $models.map((model) => ({
+		value: model.id,
+		label: model.name,
+		model: model
+	}));
 
 	let selectedModel = '';
 	$: selectedModel = items.find((item) => item.value === value) ?? '';
+	$: selectedModels = [selectedModel.value];
 
 	let searchValue = '';
 	let ollamaVersion = null;
@@ -220,75 +217,58 @@
 	};
 </script>
 
-<DropdownMenu.Root
-	bind:open={show}
-	onOpenChange={async () => {
-		searchValue = '';
-		selectedModelIdx = 0;
-		window.setTimeout(() => document.getElementById('model-search-input')?.focus(), 0);
+<Dropdown
+	bind:show
+	on:change={(e) => {
+		if (e.detail === false) {
+			onClose();
+		}
 	}}
-	closeFocus={false}
 >
-	<DropdownMenu.Trigger
-		class="relative w-full font-primary"
-		aria-label={placeholder}
-		id="model-selector-{id}-button"
-	>
-		<div
-			class="flex w-full text-left px-0.5 outline-none bg-transparent truncate {triggerClassName} justify-between font-medium placeholder-gray-400 focus:outline-none"
+	<Tooltip content={$i18n.t('Options')}>
+		<slot />
+	</Tooltip>
+
+	<div slot="content">
+		<DropdownMenu.Content
+			class="w-full max-w-[300px] rounded-xl px-1 py-1  border-gray-300/30 dark:border-gray-700/50 z-50 bg-white dark:bg-gray-850 dark:text-white shadow"
+			sideOffset={15}
+			alignOffset={-8}
+			side="top"
+			align="start"
+			transition={flyAndScale}
 		>
-			{#if selectedModel}
-				{selectedModel.label}
-			{:else}
-				{placeholder}
-			{/if}
-			<ChevronDown className=" self-center ml-2 size-3" strokeWidth="2.5" />
-		</div>
-	</DropdownMenu.Trigger>
+			<div class="flex items-center gap-2.5 px-3 mt-3.5 mb-3">
+				<Search className="size-4" strokeWidth="2.5" />
 
-	<DropdownMenu.Content
-		class=" z-40 {$mobile
-			? `w-full`
-			: `${className}`} max-w-[calc(100vw-1rem)] justify-start rounded-xl  bg-white dark:bg-gray-850 dark:text-white shadow-lg  outline-none"
-		transition={flyAndScale}
-		side={$mobile ? 'bottom' : 'bottom-start'}
-		sideOffset={3}
-	>
-		<slot>
-			{#if searchEnabled}
-				<div class="flex items-center gap-2.5 px-5 mt-3.5 mb-3">
-					<Search className="size-4" strokeWidth="2.5" />
+				<input
+					id="model-search-input"
+					bind:value={searchValue}
+					class="w-full text-sm bg-transparent outline-none"
+					placeholder={$i18n.t('Search models')}
+					autocomplete="off"
+					on:keydown={(e) => {
+						if (e.code === 'Enter' && filteredItems.length > 0) {
+							value = filteredItems[selectedModelIdx].value;
+							show = false;
+							return; // dont need to scroll on selection
+						} else if (e.code === 'ArrowDown') {
+							selectedModelIdx = Math.min(selectedModelIdx + 1, filteredItems.length - 1);
+						} else if (e.code === 'ArrowUp') {
+							selectedModelIdx = Math.max(selectedModelIdx - 1, 0);
+						} else {
+							// if the user types something, reset to the top selection.
+							selectedModelIdx = 0;
+						}
+						const item = document.querySelector(`[data-arrow-selected="true"]`);
+						item?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+					}}
+				/>
+			</div>
 
-					<input
-						id="model-search-input"
-						bind:value={searchValue}
-						class="w-full text-sm bg-transparent outline-none"
-						placeholder={searchPlaceholder}
-						autocomplete="off"
-						on:keydown={(e) => {
-							if (e.code === 'Enter' && filteredItems.length > 0) {
-								value = filteredItems[selectedModelIdx].value;
-								show = false;
-								return; // dont need to scroll on selection
-							} else if (e.code === 'ArrowDown') {
-								selectedModelIdx = Math.min(selectedModelIdx + 1, filteredItems.length - 1);
-							} else if (e.code === 'ArrowUp') {
-								selectedModelIdx = Math.max(selectedModelIdx - 1, 0);
-							} else {
-								// if the user types something, reset to the top selection.
-								selectedModelIdx = 0;
-							}
+			<hr class="border-gray-50 dark:border-gray-800" />
 
-							const item = document.querySelector(`[data-arrow-selected="true"]`);
-							item?.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
-						}}
-					/>
-				</div>
-
-				<hr class="border-gray-50 dark:border-gray-800" />
-			{/if}
-
-			<div class="px-3 my-2 max-h-64 overflow-y-auto scrollbar-hidden group">
+			<div class="px-3 my-2 max-h-[6.75rem] overflow-y-auto scrollbar-hidden group">
 				{#each filteredItems as item, index}
 					<button
 						aria-label="model-item"
@@ -546,43 +526,33 @@
 
 			{#if showTemporaryChatControl}
 				<hr class="border-gray-50 dark:border-gray-800" />
+				<div class="h-2" />
+				<DropdownMenu.Item
+					class="flex gap-2 justify-between items-center px-3 py-2 text-sm  font-medium cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800  rounded-xl"
+					on:click={async () => {
+						$temporaryChatEnabled = !$temporaryChatEnabled;
+						await goto('/desktop-app/chatbar');
+						const newChatButton = document.getElementById('new-chat-button');
+						setTimeout(() => {
+							newChatButton?.click();
+						}, 0);
 
-				<div class="flex items-center mx-2 my-2">
-					<button
-						class="flex justify-between w-full font-medium line-clamp-1 select-none items-center rounded-button py-2 px-3 text-sm text-gray-700 dark:text-gray-100 outline-none transition-all duration-75 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg cursor-pointer data-[highlighted]:bg-muted"
-						on:click={async () => {
-							temporaryChatEnabled.set(!$temporaryChatEnabled);
-							await goto('/');
-							const newChatButton = document.getElementById('new-chat-button');
-							setTimeout(() => {
-								newChatButton?.click();
-							}, 0);
-
-							// add 'temporary-chat=true' to the URL
-							if ($temporaryChatEnabled) {
-								history.replaceState(null, '', '?temporary-chat=true');
-							} else {
-								history.replaceState(null, '', location.pathname);
-							}
-
-							show = false;
-						}}
-					>
-						<div class="flex gap-2.5 items-center">
-							<ChatBubbleOval className="size-4" strokeWidth="2.5" />
-
-							{$i18n.t(`Temporary Chat`)}
-						</div>
-
-						<div>
-							<Switch state={$temporaryChatEnabled} />
-						</div>
-					</button>
-				</div>
-			{/if}
-
-			<div class="hidden w-[42rem]" />
-			<div class="hidden w-[32rem]" />
-		</slot>
-	</DropdownMenu.Content>
-</DropdownMenu.Root>
+						// add 'temporary-chat=true' to the URL
+						if ($temporaryChatEnabled) {
+							history.replaceState(null, '', '?temporary-chat=true');
+						} else {
+							history.replaceState(null, '', location.pathname);
+						}
+					}}
+				>
+					<div class="flex gap-2 items-center">
+						<ChatBubbleOval className="size-4" strokeWidth="2.5" />
+						{$i18n.t(`Temporary Chat`)}
+					</div>
+					<div>
+						<Switch state={$temporaryChatEnabled} />
+					</div>
+				</DropdownMenu.Item>{/if}
+		</DropdownMenu.Content>
+	</div>
+</Dropdown>

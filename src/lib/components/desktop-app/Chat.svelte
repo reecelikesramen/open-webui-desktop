@@ -9,7 +9,7 @@
 	import { goto, replaceState } from '$app/navigation';
 	import { page } from '$app/stores';
 
-	import { type Unsubscriber, type Writable } from 'svelte/store';
+	import { writable, type Unsubscriber, type Writable } from 'svelte/store';
 	import type { i18n as i18nType } from 'i18next';
 	import { WEBUI_BASE_URL } from '$lib/constants';
 
@@ -67,7 +67,7 @@
 		generateMoACompletion
 	} from '$lib/apis';
 
-	import MessageInput from '$lib/components/chat/MessageInput.svelte';
+	import MessageInput from './MessageInput.svelte';
 	import { getTools } from '$lib/apis/tools';
 	import ChatbarWrapper from './ChatbarWrapper.svelte';
 	import CompanionChatWrapper from './CompanionChatWrapper.svelte';
@@ -105,6 +105,8 @@
 	let atSelectedModel: Model | undefined;
 	let selectedModelIds = [];
 	$: selectedModelIds = atSelectedModel !== undefined ? [atSelectedModel.id] : selectedModels;
+	$: console.log(atSelectedModel);
+	$: console.log(selectedModelIds);
 
 	let selectedToolIds = [];
 	let webSearchEnabled = false;
@@ -2198,6 +2200,15 @@
 		await getCurrentWindow().hide();
 		await initNewChat();
 	};
+
+	let placeholder = writable('');
+	$: console.log('selectedModels', selectedModels);
+	$: $placeholder =
+		selectedModels[0]?.trim() === ''
+			? 'Select a model'
+			: selectedModels.length === 1
+				? `Message ${selectedModels[0]}`
+				: 'Send a message';
 </script>
 
 <svelte:component
@@ -2236,34 +2247,37 @@
 			</div>
 		</div>
 	{/if}
-	<MessageInput
-		{history}
-		{selectedModels}
-		bind:files
-		bind:prompt
-		bind:autoScroll
-		bind:selectedToolIds
-		bind:webSearchEnabled
-		bind:atSelectedModel
-		transparentBackground={false}
-		{stopResponse}
-		{createMessagePair}
-		on:upload={async (e) => {
-			const { type, data } = e.detail;
+	{#key $placeholder}
+		<MessageInput
+			{history}
+			bind:selectedModels
+			bind:files
+			bind:prompt
+			bind:autoScroll
+			bind:selectedToolIds
+			bind:webSearchEnabled
+			bind:atSelectedModel
+			placeholder={$placeholder}
+			transparentBackground={false}
+			{stopResponse}
+			{createMessagePair}
+			on:upload={async (e) => {
+				const { type, data } = e.detail;
 
-			if (type === 'web') {
-				await uploadWeb(data);
-			} else if (type === 'youtube') {
-				await uploadYoutubeTranscription(data);
-			}
-		}}
-		on:submit={async (e) => {
-			if (e.detail) {
-				await tick();
-				submitPrompt(
-					($settings?.richTextInput ?? true) ? e.detail.replaceAll('\n\n', '\n') : e.detail
-				);
-			}
-		}}
-	/>
+				if (type === 'web') {
+					await uploadWeb(data);
+				} else if (type === 'youtube') {
+					await uploadYoutubeTranscription(data);
+				}
+			}}
+			on:submit={async (e) => {
+				if (e.detail) {
+					await tick();
+					submitPrompt(
+						($settings?.richTextInput ?? true) ? e.detail.replaceAll('\n\n', '\n') : e.detail
+					);
+				}
+			}}
+		/>
+	{/key}
 </svelte:component>

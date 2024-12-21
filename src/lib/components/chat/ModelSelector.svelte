@@ -29,6 +29,7 @@
 		selectedModels = selectedModels.map((model) =>
 			$models.map((m) => m.id).includes(model) ? model : ''
 		);
+		console.log(selectedModels);
 	}
 </script>
 

@@ -8,6 +8,7 @@
 	import PencilSquare from '../icons/PencilSquare.svelte';
 	import Tooltip from '../common/Tooltip.svelte';
 	import i18n from '$lib/i18n';
+	import OpenInMainWindow from '../icons/OpenInMainWindow.svelte';
 
 	export let startNewChat: () => void | Promise<void> = () => {};
 	export let openInMainWindow: () => void | Promise<void> = () => {};
@@ -70,7 +71,8 @@
 						title="Open in main window"
 						on:click={openInMainWindow}
 					>
-						<svg
+						<OpenInMainWindow className="size-[1.12rem]" strokeWidth="2" />
+						<!-- <svg
 							xmlns="http://www.w3.org/2000/svg"
 							class="size-[1.12rem]"
 							viewBox="0 0 24 24"
@@ -87,8 +89,8 @@
 								fill="currentColor"
 								stroke="none"
 							></path>
-						</svg></button
-					>
+						</svg> -->
+					</button>
 				</Tooltip>
 				<Tooltip content={$i18n.t('New chat')}>
 					<button
