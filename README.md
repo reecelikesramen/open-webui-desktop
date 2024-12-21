@@ -1,39 +1,82 @@
 # Open WebUI Desktop
 
-**Early stages, WIP, unstable, currnetly incompatible with non-local setups.** Desktop app for Open WebUI, the popular self-hosted LLM WebUI. Built using Tauri 2 and hot-glued Svelte code from the front-end [Open WebUI](https://github.com/open-webui/open-webui).
+**Status: Early Development, WIP, Unstable.**  
+Currently incompatible with non-local setups.
+
+Open WebUI Desktop is a desktop application for [Open WebUI](https://github.com/open-webui/open-webui), a popular self-hosted LLM WebUI. Built using Tauri 2, it incorporates Svelte-based front-end code from Open WebUI to deliver a seamless desktop experience.
+
+---
 
 ## Screenshots
 
-<img src="./screenshots/desktop-gui.png" width=300 /><br />
-Panel-inspired look for Open WebUI on the desktop
+### Desktop GUI
 
-<img src="./screenshots/chatbar.png" width=300 /><br />
-Always on top ChatGPT and Spotlight inspired chatbar. Global hotkey is currently hardcoded to _Ctrl+Space_. Pressing _Esc_ or losing focus hides the window.
+<img src="./screenshots/desktop-gui.png" width=300 alt="Desktop GUI Screenshot"/><br />
+A panel-inspired interface for Open WebUI on the desktop.
 
-<img src="./screenshots/chat-companion-1.png" width=300 /><br />
-<img src="./screenshots/chat-companion-2.png" width=300 /><br />
-Send a message in the chatbar and the chat companion will keep that chat available for 10 minutes after the most recent message. Currently a hardcoded value. It also retains its position on the screen.
+### Chatbar
 
-## Installing
+<img src="./screenshots/chatbar-1.png" width=300 alt="Chatbar Screenshot 1"/>  
+<img src="./screenshots/chatbar-2.png" width=300 alt="Chatbar Screenshot 2"/><br />
+An always-on-top ChatGPT and Spotlight-inspired chatbar.
 
-1. Have modern Rust, Python 3.11 (preferably as a venv) and any Node.js package manager compatible with `package.json`, I used npm or deno
-1. Clone this repo
-1. Run `npm run tauri dev` or `deno task tauri dev` and begin the long first-time build process
-1. Clone [Open WebUI](https://github.com/open-webui/open-webui)
-1. Follow their instructions to start **only the backend dev server**
-1. By the time this is done the app should launch and greet you with the Open WebUI setup screen
+- **Global hotkey:** Hardcoded to `Ctrl+Space`.
+- **Hide behavior:** Press `Esc` or shift focus to hide the chatbar.
 
-## Roadmap (roughly in order)
+### Chat Companion
 
-- Support non-local setups
-- Slight UI extensions to chatbar (temporary chat switch, model selector, close button, new chat button)
-- Full support of Open WebUI on the desktop
-- Customizable app options: global hotkey, companion chat settings, chatbar position, etc.
-- Match styling guidelines of Mac, Windows, Linux (NSPanel and Window Effects)
-- Distribution
-- Modularize `Chat.svelte` code and conform to TypeScript
-- Mirror ChatGPT Desktop's useful system integrations: clipboard, screenshot, app context
+<img src="./screenshots/chat-companion-1.png" width=300 alt="Chat Companion Screenshot 1"/>  
+<img src="./screenshots/chat-companion-2.png" width=300 alt="Chat Companion Screenshot 2"/><br />
+The Chat Companion displays recent chat activity:
+
+- **Message persistence:** Keeps chats available for 10 minutes after the last message (currently hardcoded).
+- **Position retention:** The companion remembers its location on the screen.
+
+---
+
+## Installation
+
+### Prerequisites
+
+Ensure you have the following installed:
+
+- **Rust** (latest stable version)
+- **Python 3.11** (configured for a virtual environment)
+- **Node.js** with a package manager (e.g., npm or deno)
+
+### Steps
+
+1. Clone this repository.
+2. Run `npm run tauri dev` or `deno task tauri dev` to initiate the first-time build process (this may take some time).
+3. Clone the [Open WebUI repository](https://github.com/open-webui/open-webui).
+4. Follow the Open WebUI instructions to start **only the backend development server**.
+5. Once the app is built, launch it. You should see the Open WebUI setup screen.
+
+---
+
+## Roadmap
+
+The following features and improvements are planned, roughly in order of priority:
+
+1. **Non-local Setup Support**: Enable compatibility with remote backend configurations.
+1. **Full Desktop Integration**: Expand Open WebUI functionality for the desktop.
+1. **Customizable App Settings**:
+   - Global hotkey configuration
+   - Companion chat settings
+   - Chatbar position adjustments
+1. **Platform-Specific Styling**: Align with design guidelines for macOS, Windows, and Linux (e.g., NSPanel, window effects).
+1. **Distribution**: Package the application for easy distribution.
+1. **Code Modularization**: Refactor large monolithic components shared between the main UI and chatbar into modular components and migrate to TypeScript.
+1. **System Integrations**: Mirror useful features from ChatGPT Desktop, such as clipboard management, screenshots, and app context integration.
+
+---
 
 ## Contributing
 
-No guidelines at the moment; I quickly will review and integrate useful contributions.
+Contributions are welcome! While formal guidelines are not yet in place, I will review and integrate useful contributions quickly. Feel free to open issues or submit pull requests.
+
+---
+
+## License
+
+This project is licensed under the MIT License, with extensions from Open WebUI's license. For details, see the [LICENSE](./LICENSE) file.
