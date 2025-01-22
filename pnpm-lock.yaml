@@ -138,8 +138,8 @@ importers:
         specifier: ^0.10.1
         version: 0.10.1
       katex:
-        specifier: ^0.16.9
-        version: 0.16.19
+        specifier: ^0.16.21
+        version: 0.16.21
       lowlight:
         specifier: ^3.3.0
         version: 3.3.0
@@ -2720,8 +2720,8 @@ packages:
   jsonfile@6.1.0:
     resolution: {integrity: sha512-5dgndWOriYSm5cnYaJNhalLNDKOqFwyDB/rr1E9ZsGciGvKPs8R2xYGCacuf3z6K1YKDz182fd+fY3cn3pMqXQ==}
 
-  katex@0.16.19:
-    resolution: {integrity: sha512-3IA6DYVhxhBabjSLTNO9S4+OliA3Qvb8pBQXMfC4WxXJgLwZgnfDl0BmB4z6nBMdznBsZ+CGM8DrGZ5hcguDZg==}
+  katex@0.16.21:
+    resolution: {integrity: sha512-XvqR7FgOHtWupfMiigNzmh+MgUVmDGU2kXZm899ZkPfcuoPuFxyHmXsgATDpFZDAXCI8tvinaVcDo8PIIJSo4A==}
     hasBin: true
 
   keyv@4.5.4:
@@ -6675,7 +6675,7 @@ snapshots:
     optionalDependencies:
       graceful-fs: 4.2.11
 
-  katex@0.16.19:
+  katex@0.16.21:
     dependencies:
       commander: 8.3.0
 
@@ -6803,7 +6803,7 @@ snapshots:
       dayjs: 1.11.13
       dompurify: 3.1.6
       elkjs: 0.9.3
-      katex: 0.16.19
+      katex: 0.16.21
       khroma: 2.1.0
       lodash-es: 4.17.21
       mdast-util-from-markdown: 1.3.1
