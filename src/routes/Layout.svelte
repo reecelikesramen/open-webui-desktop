@@ -105,6 +105,8 @@
 
 	onMount(() => {
 		console.log('Layout onMount called');
+		let disposed = false;
+
 		const onResize = () => {
 			if (window.innerWidth < BREAKPOINT) {
 				mobile.set(true);
@@ -113,13 +115,16 @@
 			}
 		};
 
-		let unlistenReopen: UnlistenFn;
-		let unlistenOpenInMainWindow: UnlistenFn;
-		let unlistenOpenSettings: UnlistenFn;
+		// These are assigned asynchronously; default them to no-ops so cleanup can't throw
+		// if the component unmounts before initialization finishes.
+		let unlistenReopen: UnlistenFn = () => {};
+		let unlistenOpenInMainWindow: UnlistenFn = () => {};
+		let unlistenOpenSettings: UnlistenFn = () => {};
 		(async () => {
 			console.log('Waiting 100ms for cross window stores to load...');
 			await delay(100);
 			console.log('They should be loaded now!');
+			if (disposed) return;
 
 			/////////////////////////////////
 			// INITIALIZE APP STATE
@@ -129,6 +134,10 @@
 			unlistenReopen = await listen('reopen', async () => {
 				await reopenMainWindow();
 			});
+			if (disposed) {
+				unlistenReopen();
+				return;
+			}
 
 			// Open settings event listener (emitted from native menu).
 			unlistenOpenSettings = await listen(OPEN_SETTINGS, async () => {
@@ -141,6 +150,10 @@
 				await tick();
 				await getCurrentWindow().setFocus();
 			});
+			if (disposed) {
+				unlistenOpenSettings();
+				return;
+			}
 
 			//
 			unlistenOpenInMainWindow = await listen(
@@ -155,6 +168,10 @@
 					await getCurrentWindow().setFocus();
 				}
 			);
+			if (disposed) {
+				unlistenOpenInMainWindow();
+				return;
+			}
 
 			console.log('Initial app state:', $appState, $appConfig);
 
@@ -272,6 +289,7 @@
 		})();
 
 		return async () => {
+			disposed = true;
 			window.removeEventListener('resize', onResize);
 
 			// Unregister all global shortcuts

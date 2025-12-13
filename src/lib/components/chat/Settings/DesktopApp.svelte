@@ -147,6 +147,12 @@
 		$WEBUI_BASE_URL = url;
 		showSettings.set(false);
 		toast.success($i18n.t('Host updated.'));
+
+		// Force a full reload so in-memory stores (e.g. cached `user`) cannot cause redirect loops
+		// when switching to a host where the token is invalid.
+		setTimeout(() => {
+			window.location.href = '/';
+		}, 50);
 	};
 
 	const saveConfig = async () => {
