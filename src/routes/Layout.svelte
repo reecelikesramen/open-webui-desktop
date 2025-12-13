@@ -30,6 +30,7 @@
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { unregisterAll } from '@tauri-apps/plugin-global-shortcut';
 	import { io } from 'socket.io-client';
+	import { get } from 'svelte/store';
 	import { onMount, setContext, tick } from 'svelte';
 	import { Toaster } from 'svelte-sonner';
 	import { spring } from 'svelte/motion';
@@ -49,6 +50,14 @@
 	$: console.log('WEBUI_BASE_URL changed', $WEBUI_BASE_URL);
 
 	const setupSocket = () => {
+		// Ensure we don't keep multiple sockets alive across host changes / remounts.
+		const existing = get(socket);
+		try {
+			existing?.disconnect();
+		} catch (e) {
+			console.warn('Failed to disconnect existing socket', e);
+		}
+
 		const _socket = io(`${$WEBUI_BASE_URL}` || undefined, {
 			reconnection: true,
 			reconnectionDelay: 1000,
@@ -267,6 +276,14 @@
 
 			// Unregister all global shortcuts
 			await unregisterAll();
+
+			// Disconnect socket (if any) to avoid leaking connections between remounts.
+			try {
+				get(socket)?.disconnect();
+			} catch (e) {
+				console.warn('Failed to disconnect socket during cleanup', e);
+			}
+			socket.set(null);
 
 			// Unlisten to Reopen event
 			unlistenReopen();

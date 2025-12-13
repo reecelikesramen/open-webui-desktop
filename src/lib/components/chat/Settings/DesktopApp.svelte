@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { setShortcut } from '$lib/app/commands/set-shortcut';
+	import { APP_STORE_FILE } from '$lib/app/constants';
 	import type { ChatBarPosition, ResetChatTime } from '$lib/app/state';
-	import ConfirmDialog from '$lib/components/common/ConfirmDialog.svelte';
 	import Switch from '$lib/components/common/Switch.svelte';
-	import { appConfig, WEBUI_BASE_URL } from '$lib/stores';
+	import { appConfig, showSettings, WEBUI_BASE_URL } from '$lib/stores';
 	import { delay } from '$lib/utils';
-	import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 	import * as autoStart from '@tauri-apps/plugin-autostart';
 	import { isRegistered, unregister } from '@tauri-apps/plugin-global-shortcut';
+	import { getStore } from '@tauri-apps/plugin-store';
 	import type { i18n as i18nT } from 'i18next';
 	import { createEventDispatcher, getContext, onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
@@ -71,17 +71,82 @@
 	let openLinksInApp: boolean;
 	const openLinksInAppChangeHandler = () => {};
 
-	let showConfirmDialog = false;
+	type HostTestStatus = 'idle' | 'testing' | 'success' | 'error';
+	let hostUrlDraft = '';
+	let hostTestStatus: HostTestStatus = 'idle';
+	let hostTestMessage = '';
+	let hostTestResult: null | { name?: string; version?: string } = null;
 
-	const webUIBaseURLChangeHandler = async () => {
-		console.log('Changing webui base url');
-		showConfirmDialog = true;
+	const normalizeBaseUrl = (url: string) => url.trim().replace(/\/+$/, '');
+
+	const testHost = async () => {
+		const url = normalizeBaseUrl(hostUrlDraft);
+		if (!url) {
+			hostTestStatus = 'error';
+			hostTestMessage = $i18n.t('Please enter a valid URL.');
+			hostTestResult = null;
+			return;
+		}
+
+		hostTestStatus = 'testing';
+		hostTestMessage = $i18n.t('Testing connection...');
+		hostTestResult = null;
+
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 6000);
+		try {
+			const res = await fetch(`${url}/api/config`, {
+				method: 'GET',
+				headers: { 'Content-Type': 'application/json' },
+				signal: controller.signal
+			});
+			if (!res.ok) {
+				throw new Error(`${res.status} ${res.statusText}`);
+			}
+			const json = await res.json();
+			hostTestStatus = 'success';
+			hostTestResult = { name: json?.name, version: json?.version };
+			hostTestMessage = $i18n.t('Connected.');
+		} catch (e) {
+			hostTestStatus = 'error';
+			hostTestResult = null;
+			hostTestMessage = `${$i18n.t('Failed to connect.')}${
+				e instanceof Error ? ` (${e.message})` : ''
+			}`;
+		} finally {
+			clearTimeout(timeout);
+		}
 	};
 
-	const handleConfirm = async () => {
-		await getCurrentWebviewWindow().clearAllBrowsingData();
-		$WEBUI_BASE_URL = '';
-		window.location.href = '/setup';
+	const applyHost = async () => {
+		const url = normalizeBaseUrl(hostUrlDraft);
+		if (!url) {
+			toast.error($i18n.t('Please enter a valid URL.'));
+			return;
+		}
+
+		if (url === $WEBUI_BASE_URL) {
+			toast.message($i18n.t('No changes to apply.'));
+			return;
+		}
+
+		// Clear backend-derived cached stores to avoid stale UI / redirect loops when the token is invalid on the new host.
+		try {
+			const store = await getStore(APP_STORE_FILE);
+			const keepKeys = new Set(['app_config', 'app_state', 'webui_base_url', 'theme']);
+			for (const key of (await store?.keys()) || []) {
+				if (!keepKeys.has(key)) {
+					await store?.delete(key);
+				}
+			}
+			await store?.save();
+		} catch (e) {
+			console.warn('Failed to clear cached store keys during host change', e);
+		}
+
+		$WEBUI_BASE_URL = url;
+		showSettings.set(false);
+		toast.success($i18n.t('Host updated.'));
 	};
 
 	const saveConfig = async () => {
@@ -132,6 +197,7 @@
 		openNewChatsInCompanion = $appConfig.openChatsInCompanion ? 'true' : 'false';
 		launchAtLogin = await autoStart.isEnabled();
 		openLinksInApp = $appConfig.openLinksInApp;
+		hostUrlDraft = $WEBUI_BASE_URL;
 	});
 </script>
 
@@ -226,21 +292,64 @@
 
 		<hr class=" dark:border-gray-850 my-3" />
 
-		<div class="flex w-full justify-between">
-			<div class="self-center text-xs font-medium">{$i18n.t('Change WebUI Base URL')}</div>
-			<div class="flex items-center relative">
-				<div class="relative flex items-center">
-					<input
-						type="text"
-						readonly
-						value={$WEBUI_BASE_URL}
-						class="text-xs px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-850 dark:text-gray-200 focus:outline-none pr-24"
-					/>
-					<button
-						class="absolute right-1 flex text-xs items-center space-x-1 mr-1 px-3 py-1 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 transition"
-						on:click={webUIBaseURLChangeHandler}
+		<div class="flex w-full justify-between gap-3">
+			<div class="self-start text-xs font-medium pt-2">{$i18n.t('WebUI Base URL')}</div>
+			<div class="flex flex-col flex-1 gap-2">
+				<input
+					type="text"
+					bind:value={hostUrlDraft}
+					placeholder="http://localhost:3000"
+					class="text-xs px-3 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-850 dark:text-gray-200 focus:outline-none"
+				/>
+
+				{#if hostTestStatus !== 'idle'}
+					<div
+						class="text-xs {hostTestStatus === 'success'
+							? 'text-green-600 dark:text-green-400'
+							: hostTestStatus === 'error'
+								? 'text-red-600 dark:text-red-400'
+								: 'text-gray-500 dark:text-gray-400'}"
 					>
-						<div class="self-center font-medium line-clamp-1">{$i18n.t('Change')}</div>
+						{hostTestMessage}
+						{#if hostTestResult}
+							<span class="ml-1 text-gray-500 dark:text-gray-400">
+								{hostTestResult.name ? hostTestResult.name : ''}{hostTestResult.version
+									? ` v${hostTestResult.version}`
+									: ''}
+							</span>
+						{/if}
+					</div>
+				{/if}
+
+				<div class="flex gap-2 justify-end">
+					<button
+						class="px-3 py-1.5 text-xs font-medium rounded-full bg-gray-700/5 hover:bg-gray-700/10 dark:bg-gray-100/5 dark:hover:bg-gray-100/10 dark:text-gray-300 dark:hover:text-white transition disabled:opacity-50"
+						on:click={testHost}
+						disabled={hostTestStatus === 'testing'}
+						type="button"
+					>
+						{hostTestStatus === 'testing' ? $i18n.t('Testing...') : $i18n.t('Test Connection')}
+					</button>
+					<button
+						class="px-3 py-1.5 text-xs font-medium rounded-full bg-black hover:bg-gray-900 text-white dark:bg-white dark:text-black dark:hover:bg-gray-100 transition disabled:opacity-50"
+						on:click={applyHost}
+						disabled={normalizeBaseUrl(hostUrlDraft) === '' || normalizeBaseUrl(hostUrlDraft) === $WEBUI_BASE_URL}
+						type="button"
+					>
+						{$i18n.t('Apply')}
+					</button>
+					<button
+						class="px-3 py-1.5 text-xs font-medium rounded-full bg-transparent hover:bg-gray-700/5 dark:hover:bg-gray-100/5 transition disabled:opacity-50"
+						on:click={() => {
+							hostUrlDraft = $WEBUI_BASE_URL;
+							hostTestStatus = 'idle';
+							hostTestMessage = '';
+							hostTestResult = null;
+						}}
+						disabled={hostUrlDraft === $WEBUI_BASE_URL}
+						type="button"
+					>
+						{$i18n.t('Reset')}
 					</button>
 				</div>
 			</div>
@@ -255,10 +364,3 @@
 		</button>
 	</div>
 </div>
-
-<ConfirmDialog
-	bind:show={showConfirmDialog}
-	title="Change Open WebUI Base URL"
-	message="Are you sure you want to change the Open WebUI base URL?"
-	onConfirm={handleConfirm}
-/>
