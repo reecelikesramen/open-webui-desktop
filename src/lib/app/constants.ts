@@ -18,6 +18,7 @@ export const COMPANION_CHAT_EXPIRED = 'COMPANION_CHAT_EXPIRED';
 export const APP_STORES_CHANGED = 'APP_STORES_CHANGED';
 export const OPEN_IN_MAIN_WINDOW = 'OPEN_IN_MAIN_WINDOW';
 export const OPEN_IN_COMPANION_CHAT = 'OPEN_IN_COMPANION_CHAT';
+export const OPEN_SETTINGS = 'OPEN_SETTINGS';
 
 // default state
 export const DEFAULT_STATE: AppState = {

@@ -8,7 +8,7 @@
 	import { getBackendConfig } from '$lib/apis';
 	import { getSessionUser } from '$lib/apis/auths';
 	import reopenMainWindow from '$lib/app/actions/reopen-main-window';
-	import { MAIN_WINDOW_LABEL, OPEN_IN_MAIN_WINDOW } from '$lib/app/constants';
+	import { MAIN_WINDOW_LABEL, OPEN_IN_MAIN_WINDOW, OPEN_SETTINGS } from '$lib/app/constants';
 	import Draggable from '$lib/components/desktop-app/Draggable.svelte';
 	import i18n, { getLanguages, initI18n } from '$lib/i18n';
 	import {
@@ -17,6 +17,7 @@
 		appState,
 		config,
 		mobile,
+		showSettings,
 		socket,
 		theme,
 		USAGE_POOL,
@@ -105,6 +106,7 @@
 
 		let unlistenReopen: UnlistenFn;
 		let unlistenOpenInMainWindow: UnlistenFn;
+		let unlistenOpenSettings: UnlistenFn;
 		(async () => {
 			console.log('Waiting 100ms for cross window stores to load...');
 			await delay(100);
@@ -117,6 +119,18 @@
 			// Reopen main window event listener
 			unlistenReopen = await listen('reopen', async () => {
 				await reopenMainWindow();
+			});
+
+			// Open settings event listener (emitted from native menu).
+			unlistenOpenSettings = await listen(OPEN_SETTINGS, async () => {
+				// Ensure we are on a route where the settings modal exists.
+				// The modal is mounted under the (app) layout.
+				if (['/setup', '/auth', '/error'].includes(page.url.pathname)) {
+					await goto('/');
+				}
+				showSettings.set(true);
+				await tick();
+				await getCurrentWindow().setFocus();
 			});
 
 			//
@@ -259,6 +273,9 @@
 
 			// Unlisten to Open in Main Window event
 			unlistenOpenInMainWindow();
+
+			// Unlisten to Open Settings event
+			unlistenOpenSettings();
 		};
 	});
 </script>
