@@ -8,7 +8,7 @@
 	import { getBackendConfig } from '$lib/apis';
 	import { getSessionUser } from '$lib/apis/auths';
 	import reopenMainWindow from '$lib/app/actions/reopen-main-window';
-	import { MAIN_WINDOW_LABEL, OPEN_IN_MAIN_WINDOW } from '$lib/app/constants';
+	import { MAIN_WINDOW_LABEL, OPEN_IN_MAIN_WINDOW, OPEN_SETTINGS } from '$lib/app/constants';
 	import Draggable from '$lib/components/desktop-app/Draggable.svelte';
 	import i18n, { getLanguages, initI18n } from '$lib/i18n';
 	import {
@@ -17,6 +17,7 @@
 		appState,
 		config,
 		mobile,
+		showSettings,
 		socket,
 		theme,
 		USAGE_POOL,
@@ -29,6 +30,7 @@
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { unregisterAll } from '@tauri-apps/plugin-global-shortcut';
 	import { io } from 'socket.io-client';
+	import { get } from 'svelte/store';
 	import { onMount, setContext, tick } from 'svelte';
 	import { Toaster } from 'svelte-sonner';
 	import { spring } from 'svelte/motion';
@@ -48,6 +50,14 @@
 	$: console.log('WEBUI_BASE_URL changed', $WEBUI_BASE_URL);
 
 	const setupSocket = () => {
+		// Ensure we don't keep multiple sockets alive across host changes / remounts.
+		const existing = get(socket);
+		try {
+			existing?.disconnect();
+		} catch (e) {
+			console.warn('Failed to disconnect existing socket', e);
+		}
+
 		const _socket = io(`${$WEBUI_BASE_URL}` || undefined, {
 			reconnection: true,
 			reconnectionDelay: 1000,
@@ -95,6 +105,8 @@
 
 	onMount(() => {
 		console.log('Layout onMount called');
+		let disposed = false;
+
 		const onResize = () => {
 			if (window.innerWidth < BREAKPOINT) {
 				mobile.set(true);
@@ -103,12 +115,16 @@
 			}
 		};
 
-		let unlistenReopen: UnlistenFn;
-		let unlistenOpenInMainWindow: UnlistenFn;
+		// These are assigned asynchronously; default them to no-ops so cleanup can't throw
+		// if the component unmounts before initialization finishes.
+		let unlistenReopen: UnlistenFn = () => {};
+		let unlistenOpenInMainWindow: UnlistenFn = () => {};
+		let unlistenOpenSettings: UnlistenFn = () => {};
 		(async () => {
 			console.log('Waiting 100ms for cross window stores to load...');
 			await delay(100);
 			console.log('They should be loaded now!');
+			if (disposed) return;
 
 			/////////////////////////////////
 			// INITIALIZE APP STATE
@@ -118,6 +134,26 @@
 			unlistenReopen = await listen('reopen', async () => {
 				await reopenMainWindow();
 			});
+			if (disposed) {
+				unlistenReopen();
+				return;
+			}
+
+			// Open settings event listener (emitted from native menu).
+			unlistenOpenSettings = await listen(OPEN_SETTINGS, async () => {
+				// Ensure we are on a route where the settings modal exists.
+				// The modal is mounted under the (app) layout.
+				if (['/setup', '/auth', '/error'].includes(page.url.pathname)) {
+					await goto('/');
+				}
+				showSettings.set(true);
+				await tick();
+				await getCurrentWindow().setFocus();
+			});
+			if (disposed) {
+				unlistenOpenSettings();
+				return;
+			}
 
 			//
 			unlistenOpenInMainWindow = await listen(
@@ -132,6 +168,10 @@
 					await getCurrentWindow().setFocus();
 				}
 			);
+			if (disposed) {
+				unlistenOpenInMainWindow();
+				return;
+			}
 
 			console.log('Initial app state:', $appState, $appConfig);
 
@@ -249,16 +289,28 @@
 		})();
 
 		return async () => {
+			disposed = true;
 			window.removeEventListener('resize', onResize);
 
 			// Unregister all global shortcuts
 			await unregisterAll();
+
+			// Disconnect socket (if any) to avoid leaking connections between remounts.
+			try {
+				get(socket)?.disconnect();
+			} catch (e) {
+				console.warn('Failed to disconnect socket during cleanup', e);
+			}
+			socket.set(null);
 
 			// Unlisten to Reopen event
 			unlistenReopen();
 
 			// Unlisten to Open in Main Window event
 			unlistenOpenInMainWindow();
+
+			// Unlisten to Open Settings event
+			unlistenOpenSettings();
 		};
 	});
 </script>
