@@ -67,7 +67,7 @@
 		"@tauri-apps/plugin-log": "~2",
 		"@tauri-apps/plugin-opener": "^2",
 		"@tauri-apps/plugin-store": "~2.2.0",
-		"@tiptap/core": "^2.10.0",
+		"@tiptap/core": "^3.30.4",
 		"@tiptap/extension-code-block-lowlight": "^2.10.0",
 		"@tiptap/extension-highlight": "^2.10.0",
 		"@tiptap/extension-placeholder": "^2.10.0",
